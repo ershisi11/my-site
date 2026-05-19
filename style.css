@@ -1,0 +1,253 @@
+/* === 基础重置 === */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 18px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC",
+    "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: #333;
+  background: #fafaf8;
+  line-height: 1.8;
+}
+
+/* === 容器 === */
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* === 头部 === */
+header {
+  text-align: center;
+  padding: 60px 0 40px;
+}
+
+header h1 {
+  font-size: 2rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  color: #1a1a1a;
+}
+
+.subtitle {
+  color: #999;
+  font-size: 0.95rem;
+  margin-top: 6px;
+}
+
+/* === 导航 === */
+nav {
+  border-top: 1px solid #e8e8e4;
+  border-bottom: 1px solid #e8e8e4;
+  padding: 14px 0;
+  margin-bottom: 50px;
+}
+
+nav .container {
+  display: flex;
+  justify-content: center;
+  gap: 36px;
+}
+
+nav a {
+  text-decoration: none;
+  color: #888;
+  font-size: 0.95rem;
+  padding-bottom: 2px;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+nav a:hover,
+nav a.active {
+  color: #333;
+  border-color: #333;
+}
+
+/* === 内容区 === */
+main {
+  min-height: 50vh;
+}
+
+/* === 头像区 === */
+.hero {
+  text-align: center;
+  padding: 20px 0 50px;
+}
+
+.avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: inline-block;
+  margin-bottom: 20px;
+}
+
+.hero h2 {
+  font-weight: 400;
+  font-size: 1.3rem;
+  margin-bottom: 8px;
+}
+
+.hero p {
+  color: #888;
+  font-size: 0.95rem;
+}
+
+/* === 预览卡片 === */
+.preview h3 {
+  font-weight: 400;
+  font-size: 1rem;
+  color: #999;
+  margin-bottom: 16px;
+}
+
+.card-list {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.card {
+  flex: 1 1 200px;
+  display: block;
+  padding: 28px 24px;
+  text-decoration: none;
+  background: #fff;
+  border: 1px solid #e8e8e4;
+  border-radius: 6px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+  border-color: #ccc;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.card h4 {
+  color: #333;
+  font-weight: 500;
+  font-size: 1rem;
+  margin-bottom: 6px;
+}
+
+.card p {
+  color: #999;
+  font-size: 0.85rem;
+}
+
+/* === 文章列表 === */
+.page-title {
+  font-weight: 400;
+  font-size: 1.3rem;
+  margin-bottom: 28px;
+  color: #1a1a1a;
+}
+
+.article-list {
+  list-style: none;
+}
+
+.article-list li {
+  padding: 20px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.article-list li:last-child {
+  border-bottom: none;
+}
+
+.article-list a {
+  text-decoration: none;
+  color: #1a1a1a;
+  font-size: 1.05rem;
+}
+
+.article-list a:hover {
+  text-decoration: underline;
+}
+
+.article-date {
+  color: #aaa;
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+.article-excerpt {
+  color: #888;
+  font-size: 0.9rem;
+  margin-top: 6px;
+}
+
+/* === PDF 列表 === */
+.pdf-list {
+  list-style: none;
+}
+
+.pdf-list li {
+  padding: 20px 0;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.pdf-list li:last-child {
+  border-bottom: none;
+}
+
+.pdf-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.pdf-list a {
+  text-decoration: none;
+  color: #1a1a1a;
+  font-size: 1.05rem;
+}
+
+.pdf-list a:hover {
+  text-decoration: underline;
+}
+
+.pdf-info {
+  color: #aaa;
+  font-size: 0.8rem;
+  margin-top: 2px;
+}
+
+/* === 页脚 === */
+footer {
+  text-align: center;
+  padding: 50px 0 40px;
+  color: #ccc;
+  font-size: 0.8rem;
+}
+
+/* === 响应式 === */
+@media (max-width: 500px) {
+  .card-list {
+    flex-direction: column;
+  }
+
+  header {
+    padding: 40px 0 30px;
+  }
+
+  nav .container {
+    gap: 24px;
+  }
+}
