@@ -57,6 +57,142 @@
       color: #333;
       border-color: #333;
     }
+
+    /* === 编辑入口 === */
+    .edit-entry {
+      text-align: right;
+      margin-top: 16px;
+    }
+    .edit-entry a {
+      color: #ccc;
+      font-size: 0.8rem;
+      text-decoration: none;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .edit-entry a:hover { color: #999; }
+
+    /* === 密码弹窗 === */
+    .pwd-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+    }
+    .pwd-overlay.show { display: flex; }
+    .pwd-dialog {
+      background: #fff;
+      border-radius: 8px;
+      padding: 36px 32px;
+      width: 340px;
+      text-align: center;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+    .pwd-dialog h3 { font-weight: 400; font-size: 1.1rem; margin-bottom: 6px; }
+    .pwd-dialog .sub { color: #999; font-size: 0.8rem; margin-bottom: 16px; }
+    .pwd-dialog input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 1rem;
+      outline: none;
+    }
+    .pwd-dialog input:focus { border-color: #888; }
+    .pwd-dialog .err { color: #c0392b; font-size: 0.75rem; min-height: 18px; margin-top: 8px; }
+    .pwd-dialog .btns { display: flex; gap: 8px; margin-top: 12px; }
+    .pwd-dialog button {
+      flex: 1;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s;
+    }
+    .pwd-dialog .btn-confirm { background: #333; color: #fff; }
+    .pwd-dialog .btn-confirm:hover { background: #555; }
+    .pwd-dialog .btn-cancel { background: #fff; color: #666; border: 1px solid #ddd; }
+    .pwd-dialog .btn-cancel:hover { background: #f5f5f5; }
+
+    /* === 内联工具栏 === */
+    .inline-toolbar {
+      display: none;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 8px 12px;
+      background: #fafaf8;
+      border: 1px solid #e8e8e4;
+      border-radius: 6px;
+      margin-bottom: 12px;
+    }
+    .inline-toolbar button {
+      padding: 4px 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: #666;
+      transition: all 0.15s;
+    }
+    .inline-toolbar button:hover { background: #f0f0f0; color: #333; }
+    .inline-toolbar .sep {
+      width: 1px;
+      background: #e0e0e0;
+      margin: 2px 4px;
+    }
+
+    /* === 可编辑标题 === */
+    .edit-title-input {
+      display: none;
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 1.3rem;
+      font-weight: 400;
+      color: #1a1a1a;
+      outline: none;
+      margin-bottom: 20px;
+      font-family: inherit;
+    }
+    .edit-title-input:focus { border-color: #888; }
+
+    /* === 编辑操作按钮 === */
+    .inline-actions {
+      display: none;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .inline-actions button {
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .inline-actions .btn-save { background: #333; color: #fff; }
+    .inline-actions .btn-save:hover { background: #555; }
+    .inline-actions .btn-cancel { background: #fff; color: #666; border: 1px solid #ddd; }
+    .inline-actions .btn-cancel:hover { background: #f5f5f5; }
+
+    /* === 编辑模式下正文样式 === */
+    .article-body[contenteditable="true"] {
+      background: #fff;
+      padding: 16px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      outline: none;
+      min-height: 300px;
+    }
+    .article-body[contenteditable="true"]:focus { border-color: #888; }
+    .article-body[contenteditable="true"] img { max-width: 100%; height: auto; border-radius: 4px; margin: 12px 0; }
+
     .not-found {
       text-align: center;
       color: #ccc;
@@ -84,7 +220,7 @@
   <main class="container">
     <div id="articleContent"></div>
     <div class="not-found hidden" id="notFound">文章未找到</div>
-    <a href="articles.html" class="back-link">← 返回文字列表</a>
+    <a href="articles.html" class="back-link" id="backLink">← 返回文字列表</a>
   </main>
 
   <footer>
@@ -93,8 +229,200 @@
     </div>
   </footer>
 
+  <!-- 密码弹窗 -->
+  <div class="pwd-overlay" id="pwdOverlay">
+    <div class="pwd-dialog">
+      <h3>🔒 验证身份</h3>
+      <p class="sub">输入管理密码以启用在线编辑</p>
+      <input type="password" id="pwdInput" placeholder="输入管理密码">
+      <div class="err" id="pwdErr"></div>
+      <div class="btns">
+        <button class="btn-cancel" onclick="closePwdDialog()">取消</button>
+        <button class="btn-confirm" id="pwdConfirmBtn" onclick="verifyPassword()">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 隐藏图片上传 -->
+  <input type="file" id="imageFileInput" accept="image/*" style="display:none" onchange="handlePastedImage(event)">
+
   <script>
   (function() {
+    // ===== 全局状态 =====
+    var DEFAULT_PWD = 'admin123';
+    var currentArticle = null;
+    var editMode = false;
+
+    // ===== 密码弹窗 =====
+    window.showPwdDialog = function() {
+      document.getElementById('pwdOverlay').classList.add('show');
+      document.getElementById('pwdInput').value = '';
+      document.getElementById('pwdErr').textContent = '';
+      setTimeout(function() { document.getElementById('pwdInput').focus(); }, 100);
+    };
+
+    window.closePwdDialog = function() {
+      document.getElementById('pwdOverlay').classList.remove('show');
+    };
+
+    document.getElementById('pwdInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') window.verifyPassword();
+    });
+
+    document.getElementById('pwdOverlay').addEventListener('click', function(e) {
+      if (e.target === this) window.closePwdDialog();
+    });
+
+    window.verifyPassword = function() {
+      var input = document.getElementById('pwdInput').value;
+      getSavedPassword(function(savedPwd) {
+        if (input === savedPwd) {
+          window.closePwdDialog();
+          enterEditMode();
+        } else {
+          document.getElementById('pwdErr').textContent = '密码错误，请重试';
+        }
+      });
+    };
+
+    function getSavedPassword(cb) {
+      var req = indexedDB.open('MySiteDB', 1);
+      req.onsuccess = function(e) {
+        var db = e.target.result;
+        if (!db.objectStoreNames.contains('config')) { cb(DEFAULT_PWD); return; }
+        var tx = db.transaction('config', 'readonly');
+        var getReq = tx.objectStore('config').get('password');
+        getReq.onsuccess = function() { cb(getReq.result ? getReq.result.value : DEFAULT_PWD); };
+        getReq.onerror = function() { cb(DEFAULT_PWD); };
+      };
+      req.onerror = function() { cb(DEFAULT_PWD); };
+    }
+
+    // ===== 编辑模式 =====
+    function enterEditMode() {
+      editMode = true;
+      // 隐藏只读元素
+      document.querySelector('.page-title').style.display = 'none';
+      document.querySelector('.article-date').style.display = 'none';
+      document.getElementById('backLink').style.display = 'none';
+      document.getElementById('editEntry').style.display = 'none';
+      // 显示编辑元素
+      document.getElementById('inlineToolbar').style.display = 'flex';
+      document.getElementById('inlineActions').style.display = 'flex';
+      var titleInput = document.getElementById('editableTitle');
+      titleInput.style.display = 'block';
+      titleInput.value = currentArticle.title;
+      titleInput.focus();
+      var bodyEl = document.getElementById('editableBody');
+      bodyEl.contentEditable = 'true';
+      bodyEl.style.background = '#fff';
+      bodyEl.style.padding = '16px';
+      bodyEl.style.border = '1px solid #ddd';
+      bodyEl.style.borderRadius = '6px';
+      bodyEl.style.outline = 'none';
+      bodyEl.style.minHeight = '300px';
+    }
+
+    window.exitEditMode = function() {
+      editMode = false;
+      document.querySelector('.page-title').style.display = '';
+      document.querySelector('.article-date').style.display = '';
+      document.getElementById('backLink').style.display = '';
+      document.getElementById('editEntry').style.display = '';
+      document.getElementById('inlineToolbar').style.display = 'none';
+      document.getElementById('inlineActions').style.display = 'none';
+      document.getElementById('editableTitle').style.display = 'none';
+      var bodyEl = document.getElementById('editableBody');
+      bodyEl.contentEditable = 'false';
+      bodyEl.style.background = '';
+      bodyEl.style.padding = '';
+      bodyEl.style.border = '';
+      bodyEl.style.borderRadius = '';
+      bodyEl.style.outline = '';
+      bodyEl.style.minHeight = '';
+    };
+
+    // ===== 编辑器命令 =====
+    window.execCmd = function(cmd, arg) {
+      document.execCommand(cmd, false, arg || null);
+      document.getElementById('editableBody').focus();
+    };
+
+    window.insertImage = function() {
+      document.getElementById('imageFileInput').click();
+    };
+
+    window.handlePastedImage = function(event) {
+      var file = event.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) { alert('请选择图片文件'); return; }
+      var reader = new FileReader();
+      reader.onload = function() {
+        var img = document.createElement('img');
+        img.src = reader.result;
+        document.getElementById('editableBody').focus();
+        document.execCommand('insertHTML', false, img.outerHTML);
+      };
+      reader.readAsDataURL(file);
+      event.target.value = '';
+    };
+
+    // 粘贴图片
+    document.addEventListener('paste', function(e) {
+      if (!editMode) return;
+      var items = (e.clipboardData || e.originalEvent.clipboardData).items;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].type.startsWith('image/')) {
+          e.preventDefault();
+          var blob = items[i].getAsFile();
+          var reader = new FileReader();
+          reader.onload = function() {
+            var img = document.createElement('img');
+            img.src = reader.result;
+            document.getElementById('editableBody').focus();
+            document.execCommand('insertHTML', false, img.outerHTML);
+          };
+          reader.readAsDataURL(blob);
+          break;
+        }
+      }
+    });
+
+    // ===== 保存 =====
+    window.saveArticleInline = function() {
+      var title = document.getElementById('editableTitle').value.trim();
+      var content = document.getElementById('editableBody').innerHTML.trim();
+      if (!title) { alert('请输入标题'); return; }
+      if (!content || content === '<br>') { alert('请输入内容'); return; }
+
+      var req = indexedDB.open('MySiteDB', 1);
+      req.onsuccess = function(e) {
+        var db = e.target.result;
+        var tx = db.transaction('articles', 'readwrite');
+        tx.objectStore('articles').put({
+          id: currentArticle.id,
+          title: title,
+          content: content,
+          createdAt: currentArticle.createdAt,
+          updatedAt: Date.now()
+        });
+        tx.oncomplete = function() {
+          alert('保存成功！');
+          currentArticle.title = title;
+          currentArticle.content = content;
+          currentArticle.updatedAt = Date.now();
+          // 刷新只读视图
+          document.querySelector('.page-title').innerHTML = escHtml(title);
+          document.title = escHtml(title) + ' — 我的小站';
+          document.querySelector('.article-date').textContent = new Date().toISOString().split('T')[0];
+          document.getElementById('editableBody').innerHTML = content;
+          window.exitEditMode();
+        };
+      };
+      req.onerror = function() { alert('保存失败，请重试'); };
+    };
+
+    // ===== 文章加载 =====
     var params = new URLSearchParams(window.location.search);
     var id = params.get('id');
     var contentEl = document.getElementById('articleContent');
@@ -111,13 +439,37 @@
       getReq.onsuccess = function() {
         var a = getReq.result;
         if (!a) { notFoundEl.classList.remove('hidden'); return; }
+        currentArticle = a;
         var date = new Date(a.updatedAt).toISOString().split('T')[0];
         document.title = escHtml(a.title) + ' — 我的小站';
         contentEl.innerHTML =
           '<article>' +
           '<h2 class="page-title">' + escHtml(a.title) + '</h2>' +
+          '<input type="text" id="editableTitle" class="edit-title-input">' +
           '<div class="article-date">' + date + '</div>' +
-          '<div class="article-body" style="margin-top:24px;">' + a.content + '</div>' +
+          '<div class="inline-toolbar" id="inlineToolbar">' +
+            '<button onclick="execCmd(\'bold\')" title="加粗"><b>B</b></button>' +
+            '<button onclick="execCmd(\'italic\')" title="斜体"><i>I</i></button>' +
+            '<button onclick="execCmd(\'underline\')" title="下划线"><u>U</u></button>' +
+            '<span class="sep"></span>' +
+            '<button onclick="execCmd(\'formatBlock\',\'<h2>\')" title="大标题">H2</button>' +
+            '<button onclick="execCmd(\'formatBlock\',\'<h3>\')" title="小标题">H3</button>' +
+            '<button onclick="execCmd(\'formatBlock\',\'<p>\')" title="正文">P</button>' +
+            '<span class="sep"></span>' +
+            '<button onclick="execCmd(\'insertUnorderedList\')" title="无序列表">• 列表</button>' +
+            '<button onclick="execCmd(\'insertOrderedList\')" title="有序列表">1. 列表</button>' +
+            '<button onclick="execCmd(\'formatBlock\',\'<blockquote>\')" title="引用">❝ 引用</button>' +
+            '<span class="sep"></span>' +
+            '<button onclick="insertImage()" title="插入图片">🖼 图片</button>' +
+          '</div>' +
+          '<div class="article-body" id="editableBody" style="margin-top:0;">' + a.content + '</div>' +
+          '<div class="inline-actions" id="inlineActions">' +
+            '<button class="btn-save" onclick="saveArticleInline()">💾 保存修改</button>' +
+            '<button class="btn-cancel" onclick="exitEditMode()">取消</button>' +
+          '</div>' +
+          '<div class="edit-entry" id="editEntry">' +
+            '<a onclick="showPwdDialog()">✎ 编辑此文</a>' +
+          '</div>' +
           '</article>';
       };
       getReq.onerror = function() { notFoundEl.classList.remove('hidden'); };

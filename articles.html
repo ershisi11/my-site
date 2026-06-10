@@ -5,6 +5,159 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>文字 — 我的小站</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* === 写新文章按钮 === */
+    .write-new {
+      text-align: right;
+      margin-bottom: 16px;
+    }
+    .write-new a {
+      color: #999;
+      font-size: 0.85rem;
+      text-decoration: none;
+      cursor: pointer;
+      border-bottom: 1px dashed #ccc;
+      padding-bottom: 2px;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .write-new a:hover { color: #333; border-color: #333; }
+
+    /* === 密码弹窗 === */
+    .pwd-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+    }
+    .pwd-overlay.show { display: flex; }
+    .pwd-dialog {
+      background: #fff;
+      border-radius: 8px;
+      padding: 36px 32px;
+      width: 340px;
+      text-align: center;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+    .pwd-dialog h3 { font-weight: 400; font-size: 1.1rem; margin-bottom: 6px; }
+    .pwd-dialog .sub { color: #999; font-size: 0.8rem; margin-bottom: 16px; }
+    .pwd-dialog input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 1rem;
+      outline: none;
+    }
+    .pwd-dialog input:focus { border-color: #888; }
+    .pwd-dialog .err { color: #c0392b; font-size: 0.75rem; min-height: 18px; margin-top: 8px; }
+    .pwd-dialog .btns { display: flex; gap: 8px; margin-top: 12px; }
+    .pwd-dialog button {
+      flex: 1;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s;
+    }
+    .pwd-dialog .btn-confirm { background: #333; color: #fff; }
+    .pwd-dialog .btn-confirm:hover { background: #555; }
+    .pwd-dialog .btn-cancel { background: #fff; color: #666; border: 1px solid #ddd; }
+    .pwd-dialog .btn-cancel:hover { background: #f5f5f5; }
+
+    /* === 编辑器 === */
+    .editor-wrap {
+      display: none;
+    }
+    .editor-wrap.show {
+      display: block;
+    }
+
+    .editor-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #999;
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+      cursor: pointer;
+    }
+    .editor-back:hover { color: #333; }
+
+    .editor-field { margin-bottom: 16px; }
+    .editor-field label { display: block; color: #999; font-size: 0.8rem; margin-bottom: 4px; }
+    .editor-field input[type="text"] {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 1rem;
+      outline: none;
+      font-family: inherit;
+    }
+    .editor-field input[type="text"]:focus { border-color: #888; }
+
+    .editor-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 10px 12px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-bottom: none;
+      border-radius: 6px 6px 0 0;
+    }
+    .editor-toolbar button {
+      padding: 6px 12px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      background: transparent;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: #666;
+      transition: all 0.15s;
+    }
+    .editor-toolbar button:hover { background: #f0f0f0; color: #333; }
+    .editor-toolbar button:active { background: #e0e0e0; }
+    .editor-toolbar .sep { width: 1px; background: #e0e0e0; margin: 2px 4px; }
+
+    .editor-area {
+      min-height: 400px;
+      padding: 16px;
+      border: 1px solid #ddd;
+      border-top: none;
+      border-radius: 0 0 6px 6px;
+      background: #fff;
+      outline: none;
+      font-size: 1rem;
+      line-height: 2;
+      color: #444;
+    }
+    .editor-area:focus { border-color: #888; }
+    .editor-area img { max-width: 100%; height: auto; border-radius: 4px; margin: 12px 0; }
+    .editor-area h2 { font-size: 1.3rem; font-weight: 500; margin: 24px 0 8px; }
+    .editor-area h3 { font-size: 1.1rem; font-weight: 500; margin: 20px 0 6px; }
+    .editor-area blockquote { border-left: 3px solid #ddd; padding-left: 16px; color: #888; margin: 16px 0; }
+    .editor-area p { margin-bottom: 12px; }
+
+    .editor-actions { display: flex; gap: 10px; margin-top: 16px; }
+    .btn {
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: #333; color: #fff; }
+    .btn-primary:hover { background: #555; }
+    .btn-outline { background: #fff; color: #666; border: 1px solid #ddd; }
+    .btn-outline:hover { background: #f5f5f5; }
+  </style>
 </head>
 <body>
   <header>
@@ -23,21 +176,59 @@
   </nav>
 
   <main class="container">
-    <h2 class="page-title">✍️ 文字</h2>
+    <!-- 正常文章列表视图 -->
+    <div id="listView">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;">
+        <h2 class="page-title">✍️ 文字</h2>
+        <div class="write-new">
+          <a onclick="showPwdDialog()">✎ 写新文章</a>
+        </div>
+      </div>
 
-    <!-- 动态文章列表 -->
-    <ul class="article-list" id="dynamicList"></ul>
+      <!-- 动态文章列表 -->
+      <ul class="article-list" id="dynamicList"></ul>
 
-    <!-- 静态文章（手动创建的 HTML 文件） -->
-    <ul class="article-list">
-      <li>
-        <a href="articles/demo.html">示例文章：开始写点什么</a>
-        <div class="article-date">2026-05-19</div>
-        <p class="article-excerpt">不管写什么，先开始就好了。这篇文章是一篇占位的示例，你可以随时替换成自己的内容…</p>
-      </li>
-    </ul>
+      <!-- 静态文章 -->
+      <ul class="article-list">
+        <li>
+          <a href="articles/demo.html">示例文章：开始写点什么</a>
+          <div class="article-date">2026-05-19</div>
+          <p class="article-excerpt">不管写什么，先开始就好了。这篇文章是一篇占位的示例，你可以随时替换成自己的内容…</p>
+        </li>
+      </ul>
 
-    <p style="text-align:center;color:#ccc;margin-top:60px;" id="noMoreHint">更多文章即将到来</p>
+      <p style="text-align:center;color:#ccc;margin-top:60px;" id="noMoreHint">更多文章即将到来</p>
+    </div>
+
+    <!-- 编辑器视图（写新文章） -->
+    <div class="editor-wrap" id="editorView">
+      <a class="editor-back" onclick="backToList()">← 返回文章列表</a>
+      <div class="editor-field">
+        <label>标题</label>
+        <input type="text" id="editTitle" placeholder="文章标题">
+      </div>
+      <div class="editor-toolbar">
+        <button onclick="execCmd('bold')" title="加粗"><b>B</b></button>
+        <button onclick="execCmd('italic')" title="斜体"><i>I</i></button>
+        <button onclick="execCmd('underline')" title="下划线"><u>U</u></button>
+        <span class="sep"></span>
+        <button onclick="execCmd('formatBlock','<h2>')" title="大标题">H2</button>
+        <button onclick="execCmd('formatBlock','<h3>')" title="小标题">H3</button>
+        <button onclick="execCmd('formatBlock','<p>')" title="正文">P</button>
+        <span class="sep"></span>
+        <button onclick="execCmd('insertUnorderedList')" title="无序列表">• 列表</button>
+        <button onclick="execCmd('insertOrderedList')" title="有序列表">1. 列表</button>
+        <button onclick="execCmd('formatBlock','<blockquote>')" title="引用">❝ 引用</button>
+        <span class="sep"></span>
+        <button onclick="insertImage()" title="插入图片">🖼 图片</button>
+      </div>
+      <div class="editor-area" id="editorArea" contenteditable="true"></div>
+      <input type="file" id="imageFileInput" accept="image/*" style="display:none" onchange="handlePastedImage(event)">
+      <div class="editor-actions">
+        <button class="btn btn-primary" id="saveBtn" onclick="saveNewArticle()">💾 发布文章</button>
+        <button class="btn btn-outline" onclick="backToList()">取消</button>
+      </div>
+    </div>
   </main>
 
   <footer>
@@ -46,39 +237,195 @@
     </div>
   </footer>
 
+  <!-- 密码弹窗 -->
+  <div class="pwd-overlay" id="pwdOverlay">
+    <div class="pwd-dialog">
+      <h3>🔒 验证身份</h3>
+      <p class="sub">输入管理密码以写新文章</p>
+      <input type="password" id="pwdInput" placeholder="输入管理密码">
+      <div class="err" id="pwdErr"></div>
+      <div class="btns">
+        <button class="btn-cancel" onclick="closePwdDialog()">取消</button>
+        <button class="btn-confirm" onclick="verifyPassword()">确认</button>
+      </div>
+    </div>
+  </div>
+
   <script>
   (function() {
-    const DB_NAME = 'MySiteDB';
-    const listEl = document.getElementById('dynamicList');
-    const hintEl = document.getElementById('noMoreHint');
+    var DEFAULT_PWD = 'admin123';
+    var DB_NAME = 'MySiteDB';
 
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onsuccess = function(e) {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains('articles')) { render([]); return; }
-      const tx = db.transaction('articles', 'readonly');
-      const getAll = tx.objectStore('articles').getAll();
-      getAll.onsuccess = function() {
-        render(getAll.result);
-      };
-      getAll.onerror = function() { render([]); };
+    // ===== 密码弹窗 =====
+    window.showPwdDialog = function() {
+      document.getElementById('pwdOverlay').classList.add('show');
+      document.getElementById('pwdInput').value = '';
+      document.getElementById('pwdErr').textContent = '';
+      setTimeout(function() { document.getElementById('pwdInput').focus(); }, 100);
     };
-    req.onerror = function() { render([]); };
 
-    function render(articles) {
-      if (!articles || articles.length === 0) return;
-      articles.sort((a, b) => b.updatedAt - a.updatedAt);
-      listEl.innerHTML = articles.map(function(a) {
-        var date = new Date(a.updatedAt).toISOString().split('T')[0];
-        var text = a.content.replace(/<[^>]*>/g, '').substring(0, 80);
-        if (a.content.replace(/<[^>]*>/g, '').length > 80) text += '…';
-        return '<li>' +
-          '<a href="article.html?id=' + encodeURIComponent(a.id) + '">' + escHtml(a.title) + '</a>' +
-          '<div class="article-date">' + date + '</div>' +
-          '<p class="article-excerpt">' + escHtml(text) + '</p>' +
-          '</li>';
-      }).join('');
-      if (articles.length > 0) hintEl.textContent = '';
+    window.closePwdDialog = function() {
+      document.getElementById('pwdOverlay').classList.remove('show');
+    };
+
+    document.getElementById('pwdInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') window.verifyPassword();
+    });
+
+    document.getElementById('pwdOverlay').addEventListener('click', function(e) {
+      if (e.target === this) window.closePwdDialog();
+    });
+
+    window.verifyPassword = function() {
+      var input = document.getElementById('pwdInput').value;
+      getSavedPassword(function(savedPwd) {
+        if (input === savedPwd) {
+          window.closePwdDialog();
+          openEditor();
+        } else {
+          document.getElementById('pwdErr').textContent = '密码错误，请重试';
+        }
+      });
+    };
+
+    function getSavedPassword(cb) {
+      var req = indexedDB.open(DB_NAME, 1);
+      req.onsuccess = function(e) {
+        var db = e.target.result;
+        if (!db.objectStoreNames.contains('config')) { cb(DEFAULT_PWD); return; }
+        var tx = db.transaction('config', 'readonly');
+        var getReq = tx.objectStore('config').get('password');
+        getReq.onsuccess = function() { cb(getReq.result ? getReq.result.value : DEFAULT_PWD); };
+        getReq.onerror = function() { cb(DEFAULT_PWD); };
+      };
+      req.onerror = function() { cb(DEFAULT_PWD); };
+    }
+
+    // ===== 编辑器切换 =====
+    function openEditor() {
+      document.getElementById('listView').style.display = 'none';
+      document.getElementById('editorView').classList.add('show');
+      document.getElementById('editTitle').value = '';
+      document.getElementById('editorArea').innerHTML = '';
+      document.getElementById('saveBtn').textContent = '💾 发布文章';
+      document.getElementById('editTitle').focus();
+    }
+
+    window.backToList = function() {
+      document.getElementById('editorView').classList.remove('show');
+      document.getElementById('listView').style.display = '';
+      loadArticles();
+    };
+
+    // ===== 编辑器命令 =====
+    window.execCmd = function(cmd, arg) {
+      document.execCommand(cmd, false, arg || null);
+      document.getElementById('editorArea').focus();
+    };
+
+    window.insertImage = function() {
+      document.getElementById('imageFileInput').click();
+    };
+
+    window.handlePastedImage = function(event) {
+      var file = event.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) { alert('请选择图片文件'); return; }
+      var reader = new FileReader();
+      reader.onload = function() {
+        var img = document.createElement('img');
+        img.src = reader.result;
+        document.getElementById('editorArea').focus();
+        document.execCommand('insertHTML', false, img.outerHTML);
+      };
+      reader.readAsDataURL(file);
+      event.target.value = '';
+    };
+
+    // 粘贴图片
+    document.addEventListener('paste', function(e) {
+      var editorView = document.getElementById('editorView');
+      if (!editorView.classList.contains('show')) return;
+      var items = (e.clipboardData || e.originalEvent.clipboardData).items;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].type.startsWith('image/')) {
+          e.preventDefault();
+          var blob = items[i].getAsFile();
+          var reader = new FileReader();
+          reader.onload = function() {
+            var img = document.createElement('img');
+            img.src = reader.result;
+            document.getElementById('editorArea').focus();
+            document.execCommand('insertHTML', false, img.outerHTML);
+          };
+          reader.readAsDataURL(blob);
+          break;
+        }
+      }
+    });
+
+    // ===== 保存新文章 =====
+    window.saveNewArticle = function() {
+      var title = document.getElementById('editTitle').value.trim();
+      var content = document.getElementById('editorArea').innerHTML.trim();
+      if (!title) { alert('请输入标题'); return; }
+      if (!content || content === '<br>') { alert('请输入内容'); return; }
+
+      var articleId = 'a_' + Date.now();
+      var article = {
+        id: articleId,
+        title: title,
+        content: content,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      };
+
+      var req = indexedDB.open(DB_NAME, 1);
+      req.onsuccess = function(e) {
+        var db = e.target.result;
+        var tx = db.transaction('articles', 'readwrite');
+        tx.objectStore('articles').put(article);
+        tx.oncomplete = function() {
+          alert('发布成功！');
+          window.backToList();
+        };
+      };
+      req.onerror = function() { alert('保存失败，请重试'); };
+    };
+
+    // ===== 文章列表 =====
+    function loadArticles() {
+      var listEl = document.getElementById('dynamicList');
+      var hintEl = document.getElementById('noMoreHint');
+
+      var req = indexedDB.open(DB_NAME, 1);
+      req.onsuccess = function(e) {
+        var db = e.target.result;
+        if (!db.objectStoreNames.contains('articles')) { render([]); return; }
+        var tx = db.transaction('articles', 'readonly');
+        var getAll = tx.objectStore('articles').getAll();
+        getAll.onsuccess = function() {
+          render(getAll.result);
+        };
+        getAll.onerror = function() { render([]); };
+      };
+      req.onerror = function() { render([]); };
+
+      function render(articles) {
+        if (!articles || articles.length === 0) { listEl.innerHTML = ''; return; }
+        articles.sort(function(a, b) { return b.updatedAt - a.updatedAt; });
+        listEl.innerHTML = articles.map(function(a) {
+          var date = new Date(a.updatedAt).toISOString().split('T')[0];
+          var text = a.content.replace(/<[^>]*>/g, '').substring(0, 80);
+          if (a.content.replace(/<[^>]*>/g, '').length > 80) text += '\u2026';
+          return '<li>' +
+            '<a href="article.html?id=' + encodeURIComponent(a.id) + '">' + escHtml(a.title) + '</a>' +
+            '<div class="article-date">' + date + '</div>' +
+            '<p class="article-excerpt">' + escHtml(text) + '</p>' +
+            '</li>';
+        }).join('');
+        if (articles.length > 0) hintEl.textContent = '';
+      }
     }
 
     function escHtml(str) {
@@ -86,6 +433,9 @@
       div.textContent = str;
       return div.innerHTML;
     }
+
+    // ===== 初始化 =====
+    loadArticles();
   })();
   </script>
 </body>
