@@ -5,11 +5,185 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>我的小站</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* === 写文章入口 === */
+    .write-entry {
+      text-align: right;
+      margin-bottom: 8px;
+    }
+    .write-entry a {
+      color: #bbb;
+      font-size: 0.85rem;
+      text-decoration: none;
+      cursor: pointer;
+      border-bottom: 1px dashed #ddd;
+      padding-bottom: 2px;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .write-entry a:hover { color: #333; border-color: #333; }
+
+    /* === 文章列表操作按钮 === */
+    .article-actions {
+      display: inline-flex;
+      gap: 6px;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+    .article-actions a {
+      font-size: 0.75rem;
+      color: #bbb;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .article-actions a:hover { color: #333; }
+    .article-actions .del:hover { color: #c0392b; }
+
+    /* === 密码弹窗 === */
+    .pwd-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+    }
+    .pwd-overlay.show { display: flex; }
+    .pwd-dialog {
+      background: #fff;
+      border-radius: 8px;
+      padding: 36px 32px;
+      width: 340px;
+      text-align: center;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+    .pwd-dialog h3 { font-weight: 400; font-size: 1.1rem; margin-bottom: 6px; }
+    .pwd-dialog .sub { color: #999; font-size: 0.8rem; margin-bottom: 16px; }
+    .pwd-dialog input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 1rem;
+      outline: none;
+    }
+    .pwd-dialog input:focus { border-color: #888; }
+    .pwd-dialog .err { color: #c0392b; font-size: 0.75rem; min-height: 18px; margin-top: 8px; }
+    .pwd-dialog .btns { display: flex; gap: 8px; margin-top: 12px; }
+    .pwd-dialog button {
+      flex: 1;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s;
+    }
+    .pwd-dialog .btn-confirm { background: #333; color: #fff; }
+    .pwd-dialog .btn-confirm:hover { background: #555; }
+    .pwd-dialog .btn-cancel { background: #fff; color: #666; border: 1px solid #ddd; }
+    .pwd-dialog .btn-cancel:hover { background: #f5f5f5; }
+
+    /* === 编辑器 === */
+    .editor-wrap { display: none; }
+    .editor-wrap.show { display: block; }
+
+    .editor-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #999;
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+      cursor: pointer;
+    }
+    .editor-back:hover { color: #333; }
+
+    .editor-field { margin-bottom: 16px; }
+    .editor-field label { display: block; color: #999; font-size: 0.8rem; margin-bottom: 4px; }
+    .editor-field input[type="text"] {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 1rem;
+      outline: none;
+      font-family: inherit;
+    }
+    .editor-field input[type="text"]:focus { border-color: #888; }
+
+    .editor-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 10px 12px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-bottom: none;
+      border-radius: 6px 6px 0 0;
+    }
+    .editor-toolbar button {
+      padding: 6px 12px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      background: transparent;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: #666;
+      transition: all 0.15s;
+    }
+    .editor-toolbar button:hover { background: #f0f0f0; color: #333; }
+    .editor-toolbar button:active { background: #e0e0e0; }
+    .editor-toolbar .sep { width: 1px; background: #e0e0e0; margin: 2px 4px; }
+
+    .editor-area {
+      min-height: 400px;
+      padding: 16px;
+      border: 1px solid #ddd;
+      border-top: none;
+      border-radius: 0 0 6px 6px;
+      background: #fff;
+      outline: none;
+      font-size: 1rem;
+      line-height: 2;
+      color: #444;
+    }
+    .editor-area:focus { border-color: #888; }
+    .editor-area img { max-width: 100%; height: auto; border-radius: 4px; margin: 12px 0; }
+    .editor-area h2 { font-size: 1.3rem; font-weight: 500; margin: 24px 0 8px; }
+    .editor-area h3 { font-size: 1.1rem; font-weight: 500; margin: 20px 0 6px; }
+    .editor-area blockquote { border-left: 3px solid #ddd; padding-left: 16px; color: #888; margin: 16px 0; }
+    .editor-area p { margin-bottom: 12px; }
+
+    .editor-actions { display: flex; gap: 10px; margin-top: 16px; }
+    .btn {
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .btn-primary { background: #333; color: #fff; }
+    .btn-primary:hover { background: #555; }
+    .btn-outline { background: #fff; color: #666; border: 1px solid #ddd; }
+    .btn-outline:hover { background: #f5f5f5; }
+
+    /* 认证后状态提示 */
+    .auth-badge {
+      display: none;
+      font-size: 0.75rem;
+      color: #4a9;
+      margin-left: 8px;
+    }
+  </style>
 </head>
 <body>
   <header>
     <div class="container">
-      <h1>我的小站</h1>
+      <h1>我的小站 <span class="auth-badge" id="authBadge">🔓 已认证</span></h1>
       <p class="subtitle">写点东西，留些痕迹</p>
     </div>
   </header>
@@ -23,26 +197,64 @@
   </nav>
 
   <main class="container">
-    <section class="hero">
-      <img src="二十四花生.jpg" alt="头像" class="avatar">
-      <h2>二十四花生</h2>
-      <p>这里是我存放文字和作品的地方。不花哨，简简单单。</p>
-    </section>
+    <!-- 正常视图 -->
+    <div id="normalView">
+      <section class="hero">
+        <img src="二十四花生.jpg" alt="头像" class="avatar">
+        <h2>二十四花生</h2>
+        <p>这里是我存放文字和作品的地方。不花哨，简简单单。</p>
+      </section>
 
-    <section class="preview">
-      <h3>最近更新</h3>
-      <div id="recentArticles"></div>
-      <div class="card-list">
-        <a href="articles.html" class="card">
-          <h4>✍️ 文字</h4>
-          <p>随笔、笔记、想法</p>
-        </a>
-        <a href="pdfs.html" class="card">
-          <h4>📄 PDF 作品</h4>
-          <p>排版好的文档、作品集</p>
-        </a>
+      <section class="preview">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;">
+          <h3>最近更新</h3>
+          <div class="write-entry" id="writeEntry">
+            <a onclick="startNewArticle()">✎ 写文章</a>
+          </div>
+        </div>
+        <div id="recentArticles"></div>
+        <div class="card-list">
+          <a href="articles.html" class="card">
+            <h4>✍️ 文字</h4>
+            <p>随笔、笔记、想法</p>
+          </a>
+          <a href="pdfs.html" class="card">
+            <h4>📄 PDF 作品</h4>
+            <p>排版好的文档、作品集</p>
+          </a>
+        </div>
+      </section>
+    </div>
+
+    <!-- 编辑器视图 -->
+    <div class="editor-wrap" id="editorView">
+      <a class="editor-back" onclick="closeEditor()">← 返回首页</a>
+      <div class="editor-field">
+        <label>标题</label>
+        <input type="text" id="editTitle" placeholder="文章标题">
       </div>
-    </section>
+      <div class="editor-toolbar">
+        <button onclick="execCmd('bold')" title="加粗"><b>B</b></button>
+        <button onclick="execCmd('italic')" title="斜体"><i>I</i></button>
+        <button onclick="execCmd('underline')" title="下划线"><u>U</u></button>
+        <span class="sep"></span>
+        <button onclick="execCmd('formatBlock','<h2>')" title="大标题">H2</button>
+        <button onclick="execCmd('formatBlock','<h3>')" title="小标题">H3</button>
+        <button onclick="execCmd('formatBlock','<p>')" title="正文">P</button>
+        <span class="sep"></span>
+        <button onclick="execCmd('insertUnorderedList')" title="无序列表">• 列表</button>
+        <button onclick="execCmd('insertOrderedList')" title="有序列表">1. 列表</button>
+        <button onclick="execCmd('formatBlock','<blockquote>')" title="引用">❝ 引用</button>
+        <span class="sep"></span>
+        <button onclick="insertImage()" title="插入图片">🖼 图片</button>
+      </div>
+      <div class="editor-area" id="editorArea" contenteditable="true"></div>
+      <input type="file" id="imageFileInput" accept="image/*" style="display:none" onchange="handleImageFile(event)">
+      <div class="editor-actions">
+        <button class="btn btn-primary" id="saveBtn" onclick="saveArticle()">💾 发布文章</button>
+        <button class="btn btn-outline" onclick="closeEditor()">取消</button>
+      </div>
+    </div>
   </main>
 
   <footer>
@@ -51,41 +263,282 @@
     </div>
   </footer>
 
+  <!-- 密码弹窗 -->
+  <div class="pwd-overlay" id="pwdOverlay">
+    <div class="pwd-dialog">
+      <h3>🔒 验证身份</h3>
+      <p class="sub">输入管理密码以启用编辑</p>
+      <input type="password" id="pwdInput" placeholder="输入管理密码">
+      <div class="err" id="pwdErr"></div>
+      <div class="btns">
+        <button class="btn-cancel" onclick="closePwdDialog()">取消</button>
+        <button class="btn-confirm" onclick="verifyPassword()">确认</button>
+      </div>
+    </div>
+  </div>
+
   <script>
   (function() {
-    var container = document.getElementById('recentArticles');
-    var req = indexedDB.open('MySiteDB', 1);
-    req.onsuccess = function(e) {
-      var db = e.target.result;
-      if (!db.objectStoreNames.contains('articles')) return;
-      var tx = db.transaction('articles', 'readonly');
-      var getAll = tx.objectStore('articles').getAll();
-      getAll.onsuccess = function() {
-        var articles = getAll.result;
-        if (!articles || articles.length === 0) return;
-        articles.sort(function(a, b) { return b.updatedAt - a.updatedAt; });
-        var recent = articles.slice(0, 3);
-        var html = '<ul class="article-list" style="margin-bottom:24px">';
-        recent.forEach(function(a) {
-          var date = new Date(a.updatedAt).toISOString().split('T')[0];
-          var text = a.content.replace(/<[^>]*>/g, '').substring(0, 60);
-          if (a.content.replace(/<[^>]*>/g, '').length > 60) text += '…';
-          html += '<li>' +
-            '<a href="article.html?id=' + encodeURIComponent(a.id) + '">' + escHtml(a.title) + '</a>' +
-            '<div class="article-date">' + date + '</div>' +
-            '<p class="article-excerpt">' + escHtml(text) + '</p>' +
-            '</li>';
-        });
-        html += '</ul>';
-        container.innerHTML = html;
-      };
+    var DEFAULT_PWD = 'admin123';
+    var DB_NAME = 'MySiteDB';
+    var authed = false;           // 当前会话是否已认证
+    var editingId = null;        // 正在编辑的文章 id（null = 新文章）
+    var allArticles = [];        // 缓存文章列表
+
+    // ===== 密码弹窗 =====
+    window.showPwdDialog = function() {
+      document.getElementById('pwdOverlay').classList.add('show');
+      document.getElementById('pwdInput').value = '';
+      document.getElementById('pwdErr').textContent = '';
+      setTimeout(function() { document.getElementById('pwdInput').focus(); }, 100);
     };
+
+    window.closePwdDialog = function() {
+      document.getElementById('pwdOverlay').classList.remove('show');
+    };
+
+    document.getElementById('pwdInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') window.verifyPassword();
+    });
+
+    document.getElementById('pwdOverlay').addEventListener('click', function(e) {
+      if (e.target === this) window.closePwdDialog();
+    });
+
+    // 记录「认证后要执行的动作」
+    var pendingAction = null;
+
+    window.verifyPassword = function() {
+      var input = document.getElementById('pwdInput').value;
+      getSavedPassword(function(savedPwd) {
+        if (input === savedPwd) {
+          authed = true;
+          document.getElementById('authBadge').style.display = 'inline';
+          window.closePwdDialog();
+          // 刷新列表（显示操作按钮）
+          loadRecentArticles();
+          // 执行待处理动作
+          if (pendingAction) {
+            var action = pendingAction;
+            pendingAction = null;
+            action();
+          }
+        } else {
+          document.getElementById('pwdErr').textContent = '密码错误，请重试';
+        }
+      });
+    };
+
+    function getSavedPassword(cb) {
+      var req = indexedDB.open(DB_NAME, 1);
+      req.onsuccess = function(e) {
+        var db = e.target.result;
+        if (!db.objectStoreNames.contains('config')) { cb(DEFAULT_PWD); return; }
+        var tx = db.transaction('config', 'readonly');
+        var getReq = tx.objectStore('config').get('password');
+        getReq.onsuccess = function() { cb(getReq.result ? getReq.result.value : DEFAULT_PWD); };
+        getReq.onerror = function() { cb(DEFAULT_PWD); };
+      };
+      req.onerror = function() { cb(DEFAULT_PWD); };
+    }
+
+    function requireAuth(action) {
+      if (authed) {
+        action();
+      } else {
+        pendingAction = action;
+        window.showPwdDialog();
+      }
+    }
+
+    // ===== 写新文章 =====
+    window.startNewArticle = function() {
+      requireAuth(function() {
+        editingId = null;
+        document.getElementById('editTitle').value = '';
+        document.getElementById('editorArea').innerHTML = '';
+        document.getElementById('saveBtn').textContent = '💾 发布文章';
+        document.getElementById('normalView').style.display = 'none';
+        document.getElementById('editorView').classList.add('show');
+        document.getElementById('editTitle').focus();
+      });
+    };
+
+    // ===== 编辑已有文章 =====
+    window.editArticle = function(id) {
+      requireAuth(function() {
+        var article = null;
+        for (var i = 0; i < allArticles.length; i++) {
+          if (allArticles[i].id === id) { article = allArticles[i]; break; }
+        }
+        if (!article) return;
+        editingId = id;
+        document.getElementById('editTitle').value = article.title;
+        document.getElementById('editorArea').innerHTML = article.content;
+        document.getElementById('saveBtn').textContent = '💾 更新文章';
+        document.getElementById('normalView').style.display = 'none';
+        document.getElementById('editorView').classList.add('show');
+        document.getElementById('editTitle').focus();
+      });
+    };
+
+    // ===== 删除文章 =====
+    window.deleteArticle = function(id) {
+      requireAuth(function() {
+        if (!confirm('确定删除这篇文章吗？此操作不可撤销。')) return;
+        var req = indexedDB.open(DB_NAME, 1);
+        req.onsuccess = function(e) {
+          var db = e.target.result;
+          var tx = db.transaction('articles', 'readwrite');
+          tx.objectStore('articles').delete(id);
+          tx.oncomplete = function() {
+            loadRecentArticles();
+          };
+        };
+      });
+    };
+
+    // ===== 关闭编辑器 =====
+    window.closeEditor = function() {
+      document.getElementById('editorView').classList.remove('show');
+      document.getElementById('normalView').style.display = '';
+      editingId = null;
+      loadRecentArticles();
+    };
+
+    // ===== 编辑器命令 =====
+    window.execCmd = function(cmd, arg) {
+      document.execCommand(cmd, false, arg || null);
+      document.getElementById('editorArea').focus();
+    };
+
+    window.insertImage = function() {
+      document.getElementById('imageFileInput').click();
+    };
+
+    window.handleImageFile = function(event) {
+      var file = event.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) { alert('请选择图片文件'); return; }
+      var reader = new FileReader();
+      reader.onload = function() {
+        var img = document.createElement('img');
+        img.src = reader.result;
+        document.getElementById('editorArea').focus();
+        document.execCommand('insertHTML', false, img.outerHTML);
+      };
+      reader.readAsDataURL(file);
+      event.target.value = '';
+    };
+
+    // 粘贴图片
+    document.addEventListener('paste', function(e) {
+      var editorView = document.getElementById('editorView');
+      if (!editorView.classList.contains('show')) return;
+      var items = (e.clipboardData || e.originalEvent.clipboardData).items;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].type.startsWith('image/')) {
+          e.preventDefault();
+          var blob = items[i].getAsFile();
+          var reader = new FileReader();
+          reader.onload = function() {
+            var img = document.createElement('img');
+            img.src = reader.result;
+            document.getElementById('editorArea').focus();
+            document.execCommand('insertHTML', false, img.outerHTML);
+          };
+          reader.readAsDataURL(blob);
+          break;
+        }
+      }
+    });
+
+    // ===== 保存 =====
+    window.saveArticle = function() {
+      var title = document.getElementById('editTitle').value.trim();
+      var content = document.getElementById('editorArea').innerHTML.trim();
+      if (!title) { alert('请输入标题'); return; }
+      if (!content || content === '<br>') { alert('请输入内容'); return; }
+
+      var id = editingId || 'a_' + Date.now();
+      var now = Date.now();
+      var article = {
+        id: id,
+        title: title,
+        content: content,
+        createdAt: editingId ? (function() {
+          for (var i = 0; i < allArticles.length; i++) {
+            if (allArticles[i].id === editingId) return allArticles[i].createdAt;
+          }
+          return now;
+        })() : now,
+        updatedAt: now
+      };
+
+      var req = indexedDB.open(DB_NAME, 1);
+      req.onsuccess = function(e) {
+        var db = e.target.result;
+        var tx = db.transaction('articles', 'readwrite');
+        tx.objectStore('articles').put(article);
+        tx.oncomplete = function() {
+          alert(editingId ? '更新成功！' : '发布成功！');
+          window.closeEditor();
+        };
+      };
+      req.onerror = function() { alert('保存失败，请重试'); };
+    };
+
+    // ===== 加载最近文章 =====
+    function loadRecentArticles() {
+      var container = document.getElementById('recentArticles');
+      var req = indexedDB.open(DB_NAME, 1);
+      req.onsuccess = function(e) {
+        var db = e.target.result;
+        if (!db.objectStoreNames.contains('articles')) { container.innerHTML = ''; return; }
+        var tx = db.transaction('articles', 'readonly');
+        var getAll = tx.objectStore('articles').getAll();
+        getAll.onsuccess = function() {
+          allArticles = getAll.result;
+          if (!allArticles || allArticles.length === 0) { container.innerHTML = ''; return; }
+          allArticles.sort(function(a, b) { return b.updatedAt - a.updatedAt; });
+          var recent = allArticles.slice(0, 5);
+          var html = '<ul class="article-list" style="margin-bottom:24px">';
+          recent.forEach(function(a) {
+            var date = new Date(a.updatedAt).toISOString().split('T')[0];
+            var text = stripHtml(a.content).substring(0, 60);
+            if (stripHtml(a.content).length > 60) text += '\u2026';
+            var actionsHtml = authed ?
+              '<span class="article-actions">' +
+                '<a onclick="editArticle(\'' + a.id + '\')">编辑</a>' +
+                '<a class="del" onclick="deleteArticle(\'' + a.id + '\')">删除</a>' +
+              '</span>' : '';
+            html += '<li>' +
+              '<a href="article.html?id=' + encodeURIComponent(a.id) + '">' + escHtml(a.title) + '</a>' +
+              actionsHtml +
+              '<div class="article-date">' + date + '</div>' +
+              '<p class="article-excerpt">' + escHtml(text) + '</p>' +
+              '</li>';
+          });
+          html += '</ul>';
+          container.innerHTML = html;
+        };
+      };
+    }
+
+    function stripHtml(html) {
+      var tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      return tmp.textContent || tmp.innerText || '';
+    }
 
     function escHtml(str) {
       var div = document.createElement('div');
       div.textContent = str;
       return div.innerHTML;
     }
+
+    // ===== 初始化 =====
+    loadRecentArticles();
   })();
   </script>
 </body>
