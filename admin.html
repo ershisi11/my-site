@@ -1,0 +1,509 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理后台 — 我的小站</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+      color:#333;background:#fafaf8;line-height:1.8;font-size:16px;
+    }
+    .container{max-width:780px;margin:0 auto;padding:0 20px}
+
+    /* Login */
+    .login-wrap{
+      display:flex;align-items:center;justify-content:center;
+      min-height:100vh;
+    }
+    .login-box{
+      background:#fff;border:1px solid #e8e8e4;border-radius:8px;
+      padding:48px 36px;width:100%;max-width:380px;text-align:center;
+    }
+    .login-box h1{font-weight:400;font-size:1.4rem;margin-bottom:8px}
+    .login-box .sub{color:#999;font-size:.85rem;margin-bottom:28px}
+    .login-box input[type=password]{
+      width:100%;padding:12px 16px;border:1px solid #ddd;border-radius:6px;
+      font-size:1rem;outline:none;transition:border-color .2s;
+    }
+    .login-box input[type=password]:focus{border-color:#888}
+    .login-box .err{color:#c0392b;font-size:.8rem;margin-top:8px;min-height:20px}
+    .login-box button{
+      width:100%;padding:12px;margin-top:16px;
+      background:#333;color:#fff;border:none;border-radius:6px;
+      font-size:1rem;cursor:pointer;transition:background .2s;
+    }
+    .login-box button:hover{background:#555}
+    .login-box .hint{color:#bbb;font-size:.75rem;margin-top:20px}
+
+    /* Header */
+    .admin-header{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:20px 0;border-bottom:1px solid #e8e8e4;margin-bottom:32px;
+    }
+    .admin-header h1{font-weight:400;font-size:1.2rem}
+    .admin-header a{color:#999;text-decoration:none;font-size:.85rem}
+    .admin-header a:hover{color:#333}
+
+    /* Dashboard */
+    .toolbar{display:flex;gap:12px;margin-bottom:24px}
+    .btn{
+      padding:10px 20px;border-radius:6px;font-size:.9rem;
+      cursor:pointer;border:none;transition:all .2s;text-decoration:none;display:inline-block;
+    }
+    .btn-primary{background:#333;color:#fff}
+    .btn-primary:hover{background:#555}
+    .btn-outline{background:#fff;color:#666;border:1px solid #ddd}
+    .btn-outline:hover{background:#f5f5f5}
+    .btn-danger{background:#c0392b;color:#fff}
+    .btn-danger:hover{background:#e74c3c}
+    .btn-sm{padding:6px 14px;font-size:.8rem}
+
+    .article-table{width:100%;border-collapse:collapse}
+    .article-table th,.article-table td{
+      text-align:left;padding:14px 12px;border-bottom:1px solid #eee;
+    }
+    .article-table th{color:#999;font-weight:400;font-size:.8rem}
+    .article-table td{font-size:.9rem}
+    .article-table .actions{display:flex;gap:8px}
+    .empty-hint{text-align:center;color:#ccc;padding:60px 0}
+
+    /* Editor */
+    .editor-back{display:inline-flex;align-items:center;gap:6px;color:#999;text-decoration:none;font-size:.9rem;margin-bottom:20px}
+    .editor-back:hover{color:#333}
+    .editor-field{margin-bottom:16px}
+    .editor-field label{display:block;color:#999;font-size:.8rem;margin-bottom:4px}
+    .editor-field input[type=text]{
+      width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:6px;
+      font-size:1rem;outline:none;transition:border-color .2s;
+    }
+    .editor-field input[type=text]:focus{border-color:#888}
+
+    .editor-toolbar{
+      display:flex;flex-wrap:wrap;gap:4px;padding:10px 12px;
+      background:#fff;border:1px solid #ddd;border-bottom:none;border-radius:6px 6px 0 0;
+    }
+    .editor-toolbar button{
+      padding:6px 12px;border:1px solid transparent;border-radius:4px;
+      background:transparent;cursor:pointer;font-size:.85rem;color:#666;transition:all .15s;
+    }
+    .editor-toolbar button:hover{background:#f0f0f0;color:#333}
+    .editor-toolbar button:active{background:#e0e0e0}
+    .editor-toolbar .sep{width:1px;background:#e0e0e0;margin:2px 4px}
+
+    .editor-area{
+      min-height:400px;padding:16px;border:1px solid #ddd;border-top:none;
+      border-radius:0 0 6px 6px;background:#fff;outline:none;
+      font-size:1rem;line-height:2;color:#444;
+    }
+    .editor-area:focus{border-color:#888}
+    .editor-area img{max-width:100%;height:auto;border-radius:4px;margin:12px 0}
+    .editor-area h2{font-size:1.3rem;font-weight:500;margin:24px 0 8px}
+    .editor-area h3{font-size:1.1rem;font-weight:500;margin:20px 0 6px}
+    .editor-area blockquote{border-left:3px solid #ddd;padding-left:16px;color:#888;margin:16px 0}
+    .editor-area p{margin-bottom:12px}
+
+    .editor-actions{display:flex;gap:10px;margin-top:16px}
+
+    /* Change pwd */
+    .change-pwd{margin-top:40px;padding:20px;background:#fff;border:1px solid #e8e8e4;border-radius:6px}
+    .change-pwd h3{font-weight:400;font-size:1rem;margin-bottom:12px}
+    .change-pwd .row{display:flex;gap:10px;align-items:flex-start}
+    .change-pwd input[type=password]{
+      flex:1;padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:.9rem;outline:none;
+    }
+    .change-pwd input[type=password]:focus{border-color:#888}
+    .msg{font-size:.8rem;margin-top:8px;min-height:20px}
+    .msg-ok{color:#27ae60}
+    .msg-err{color:#c0392b}
+
+    .hidden{display:none!important}
+    footer{text-align:center;padding:50px 0 40px;color:#ccc;font-size:.8rem}
+  </style>
+</head>
+<body>
+
+<!-- ===== 登录界面 ===== -->
+<div id="loginPage" class="login-wrap">
+  <div class="login-box">
+    <h1>🔐 管理后台</h1>
+    <p class="sub">请输入密码以继续</p>
+    <input type="password" id="pwdInput" placeholder="密码" autofocus>
+    <div class="err" id="loginErr"></div>
+    <button onclick="doLogin()">进入</button>
+    <p class="hint">默认密码: admin123</p>
+  </div>
+</div>
+
+<!-- ===== 仪表盘 ===== -->
+<div id="dashboard" class="container hidden">
+  <div class="admin-header">
+    <h1>📋 文章管理</h1>
+    <div>
+      <a href="#" onclick="showChangePwd()">修改密码</a> &nbsp;
+      <a href="#" onclick="doLogout()">退出</a>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn btn-primary" onclick="newArticle()">+ 新建文章</button>
+    <button class="btn btn-outline" onclick="exportAll()">导出备份</button>
+    <button class="btn btn-outline" onclick="document.getElementById('importFile').click()">导入备份</button>
+    <input type="file" id="importFile" accept=".json" class="hidden" onchange="importAll(event)">
+  </div>
+
+  <table class="article-table" id="articleTable">
+    <thead><tr><th>标题</th><th>日期</th><th>摘要</th><th style="width:120px">操作</th></tr></thead>
+    <tbody id="articleTbody"></tbody>
+  </table>
+  <div class="empty-hint" id="emptyHint">还没有文章，点击「新建文章」开始写作</div>
+
+  <!-- 修改密码 -->
+  <div id="changePwdBox" class="change-pwd hidden">
+    <h3>修改密码</h3>
+    <div class="row">
+      <input type="password" id="oldPwd" placeholder="旧密码">
+      <input type="password" id="newPwd" placeholder="新密码">
+      <input type="password" id="newPwd2" placeholder="确认新密码">
+      <button class="btn btn-primary btn-sm" onclick="changePassword()">保存</button>
+    </div>
+    <div class="msg" id="pwdMsg"></div>
+  </div>
+
+  <footer><p>© 2026 我的小站 · 管理后台</p></footer>
+</div>
+
+<!-- ===== 编辑器 ===== -->
+<div id="editorPage" class="container hidden">
+  <a href="#" class="editor-back" onclick="backToList()">← 返回文章列表</a>
+  <div class="editor-field">
+    <label>标题</label>
+    <input type="text" id="editTitle" placeholder="文章标题">
+  </div>
+  <div class="editor-toolbar">
+    <button onclick="execCmd('bold')" title="加粗"><b>B</b></button>
+    <button onclick="execCmd('italic')" title="斜体"><i>I</i></button>
+    <button onclick="execCmd('underline')" title="下划线"><u>U</u></button>
+    <span class="sep"></span>
+    <button onclick="execCmd('formatBlock','<h2>')" title="大标题">H2</button>
+    <button onclick="execCmd('formatBlock','<h3>')" title="小标题">H3</button>
+    <button onclick="execCmd('formatBlock','<p>')" title="正文">P</button>
+    <span class="sep"></span>
+    <button onclick="execCmd('insertUnorderedList')" title="无序列表">• 列表</button>
+    <button onclick="execCmd('insertOrderedList')" title="有序列表">1. 列表</button>
+    <button onclick="execCmd('formatBlock','<blockquote>')" title="引用">❝ 引用</button>
+    <span class="sep"></span>
+    <button onclick="insertImage()" title="插入图片">🖼 图片</button>
+  </div>
+  <div class="editor-area" id="editorArea" contenteditable="true"></div>
+  <input type="file" id="imageFileInput" accept="image/*" class="hidden" onchange="handleImageFile(event)">
+  <div class="editor-actions">
+    <button class="btn btn-primary" id="saveBtn" onclick="saveArticle()">保存文章</button>
+    <button class="btn btn-outline" onclick="backToList()">取消</button>
+  </div>
+  <footer><p>© 2026 我的小站 · 管理后台</p></footer>
+</div>
+
+<script>
+// ===== IndexedDB =====
+const DB_NAME = 'MySiteDB';
+const DB_VERSION = 1;
+let db;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('articles')) {
+        d.createObjectStore('articles', { keyPath: 'id' });
+      }
+      if (!d.objectStoreNames.contains('config')) {
+        d.createObjectStore('config', { keyPath: 'key' });
+      }
+    };
+    req.onsuccess = (e) => { db = e.target.result; resolve(db); };
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+function dbPut(storeName, data) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readwrite');
+    tx.objectStore(storeName).put(data);
+    tx.oncomplete = resolve;
+    tx.onerror = (e) => reject(e.target.error);
+  });
+}
+
+function dbGet(storeName, key) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readonly');
+    const req = tx.objectStore(storeName).get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+function dbGetAll(storeName) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readonly');
+    const req = tx.objectStore(storeName).getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+function dbDelete(storeName, key) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readwrite');
+    tx.objectStore(storeName).delete(key);
+    tx.oncomplete = resolve;
+    tx.onerror = (e) => reject(e.target.error);
+  });
+}
+
+// ===== Password =====
+const DEFAULT_PWD = 'admin123';
+let editingId = null;
+
+async function getPassword() {
+  const cfg = await dbGet('config', 'password');
+  return cfg ? cfg.value : DEFAULT_PWD;
+}
+
+async function setPassword(newPwd) {
+  await dbPut('config', { key: 'password', value: newPwd });
+}
+
+// ===== Login =====
+async function doLogin() {
+  const input = document.getElementById('pwdInput').value;
+  const errEl = document.getElementById('loginErr');
+  const pwd = await getPassword();
+  if (input === pwd) {
+    document.getElementById('loginPage').classList.add('hidden');
+    document.getElementById('dashboard').classList.remove('hidden');
+    loadArticles();
+  } else {
+    errEl.textContent = '密码错误，请重试';
+  }
+}
+
+document.getElementById('pwdInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') doLogin();
+});
+
+function doLogout() {
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('editorPage').classList.add('hidden');
+  document.getElementById('loginPage').classList.remove('hidden');
+  document.getElementById('pwdInput').value = '';
+  document.getElementById('loginErr').textContent = '';
+}
+
+async function changePassword() {
+  const oldP = document.getElementById('oldPwd').value;
+  const newP = document.getElementById('newPwd').value;
+  const newP2 = document.getElementById('newPwd2').value;
+  const msg = document.getElementById('pwdMsg');
+  const curPwd = await getPassword();
+
+  if (oldP !== curPwd) { msg.className='msg msg-err'; msg.textContent='旧密码不正确'; return; }
+  if (newP.length < 3) { msg.className='msg msg-err'; msg.textContent='新密码至少3位'; return; }
+  if (newP !== newP2) { msg.className='msg msg-err'; msg.textContent='两次输入不一致'; return; }
+
+  await setPassword(newP);
+  msg.className='msg msg-ok'; msg.textContent='密码修改成功';
+  document.getElementById('oldPwd').value = '';
+  document.getElementById('newPwd').value = '';
+  document.getElementById('newPwd2').value = '';
+}
+
+function showChangePwd() {
+  const box = document.getElementById('changePwdBox');
+  box.classList.toggle('hidden');
+}
+
+// ===== Article List =====
+async function loadArticles() {
+  const articles = await dbGetAll('articles');
+  articles.sort((a, b) => b.updatedAt - a.updatedAt);
+  const tbody = document.getElementById('articleTbody');
+  const empty = document.getElementById('emptyHint');
+  const table = document.getElementById('articleTable');
+
+  if (articles.length === 0) {
+    empty.classList.remove('hidden');
+    table.classList.add('hidden');
+  } else {
+    empty.classList.add('hidden');
+    table.classList.remove('hidden');
+    tbody.innerHTML = articles.map(a => {
+      const excerpt = stripHtml(a.content).substring(0, 60) + (stripHtml(a.content).length > 60 ? '…' : '');
+      const date = new Date(a.updatedAt).toISOString().split('T')[0];
+      return `<tr>
+        <td>${escHtml(a.title)}</td>
+        <td style="color:#aaa;font-size:.8rem">${date}</td>
+        <td style="color:#888;font-size:.85rem">${escHtml(excerpt)}</td>
+        <td class="actions">
+          <button class="btn btn-outline btn-sm" onclick="editArticle(''`+a.id+`'')">编辑</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteArticle(''`+a.id+`'')">删除</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+}
+
+function newArticle() {
+  editingId = null;
+  document.getElementById('editTitle').value = '';
+  document.getElementById('editorArea').innerHTML = '';
+  document.getElementById('saveBtn').textContent = '保存文章';
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('editorPage').classList.remove('hidden');
+  document.getElementById('editTitle').focus();
+}
+
+async function editArticle(id) {
+  const a = await dbGet('articles', id);
+  if (!a) return;
+  editingId = id;
+  document.getElementById('editTitle').value = a.title;
+  document.getElementById('editorArea').innerHTML = a.content;
+  document.getElementById('saveBtn').textContent = '更新文章';
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('editorPage').classList.remove('hidden');
+}
+
+async function deleteArticle(id) {
+  if (!confirm('确定删除这篇文章吗？此操作不可撤销。')) return;
+  await dbDelete('articles', id);
+  loadArticles();
+}
+
+function backToList() {
+  document.getElementById('editorPage').classList.add('hidden');
+  document.getElementById('dashboard').classList.remove('hidden');
+  loadArticles();
+}
+
+// ===== Editor =====
+function execCmd(cmd, arg) {
+  document.execCommand(cmd, false, arg || null);
+  document.getElementById('editorArea').focus();
+}
+
+function insertImage() {
+  document.getElementById('imageFileInput').click();
+}
+
+function handleImageFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { alert('请选择图片文件'); return; }
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = document.createElement('img');
+    img.src = reader.result;
+    document.getElementById('editorArea').focus();
+    document.execCommand('insertHTML', false, img.outerHTML);
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+// Paste image support
+document.getElementById('editorArea').addEventListener('paste', (e) => {
+  const items = e.clipboardData.items;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      e.preventDefault();
+      const blob = item.getAsFile();
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = document.createElement('img');
+        img.src = reader.result;
+        const sel = window.getSelection();
+        if (sel.rangeCount) {
+          sel.getRangeAt(0).insertNode(img);
+          sel.collapseToEnd();
+        }
+      };
+      reader.readAsDataURL(blob);
+      break;
+    }
+  }
+});
+
+async function saveArticle() {
+  const title = document.getElementById('editTitle').value.trim();
+  const content = document.getElementById('editorArea').innerHTML.trim();
+  if (!title) { alert('请输入标题'); return; }
+  if (!content || content === '<br>' || content === '<br>' + '') { alert('请输入内容'); return; }
+
+  const id = editingId || 'a_' + Date.now();
+  const article = {
+    id,
+    title,
+    content,
+    createdAt: editingId ? (await dbGet('articles', id))?.createdAt || Date.now() : Date.now(),
+    updatedAt: Date.now(),
+  };
+  await dbPut('articles', article);
+  alert('保存成功！');
+  backToList();
+}
+
+// ===== Export / Import =====
+async function exportAll() {
+  const articles = await dbGetAll('articles');
+  const cfg = await dbGet('config', 'password');
+  const data = { articles, password: cfg?.value || DEFAULT_PWD, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'mysite-backup-' + new Date().toISOString().split('T')[0] + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function importAll(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const text = await file.text();
+  let data;
+  try { data = JSON.parse(text); } catch(e) { alert('无效的备份文件'); return; }
+  if (!data.articles || !Array.isArray(data.articles)) { alert('备份文件格式不正确'); return; }
+  if (!confirm(`即将导入 ${data.articles.length} 篇文章，继续？`)) return;
+
+  for (const a of data.articles) {
+    await dbPut('articles', a);
+  }
+  if (data.password) {
+    await dbPut('config', { key: 'password', value: data.password });
+  }
+  alert('导入完成！');
+  loadArticles();
+  event.target.value = '';
+}
+
+// ===== Helpers =====
+function stripHtml(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || '';
+}
+
+function escHtml(str) {
+  const tmp = document.createElement('div');
+  tmp.textContent = str;
+  return tmp.innerHTML;
+}
+
+// ===== Init =====
+openDB();
+</script>
+</body>
+</html>

@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>我的个人网站</title>
+  <title>我的小站</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -31,13 +31,14 @@
 
     <section class="preview">
       <h3>最近更新</h3>
+      <div id="recentArticles"></div>
       <div class="card-list">
         <a href="articles.html" class="card">
-          <h4>? 文字</h4>
+          <h4>✍️ 文字</h4>
           <p>随笔、笔记、想法</p>
         </a>
         <a href="pdfs.html" class="card">
-          <h4>? PDF 作品</h4>
+          <h4>📄 PDF 作品</h4>
           <p>排版好的文档、作品集</p>
         </a>
       </div>
@@ -46,8 +47,46 @@
 
   <footer>
     <div class="container">
-      <p>© 2026 我的小站</p>
+      <p>© 2026 我的小站 &nbsp;·&nbsp; <a href="admin.html" style="color:#ddd;text-decoration:none;">管理</a></p>
     </div>
   </footer>
+
+  <script>
+  (function() {
+    var container = document.getElementById('recentArticles');
+    var req = indexedDB.open('MySiteDB', 1);
+    req.onsuccess = function(e) {
+      var db = e.target.result;
+      if (!db.objectStoreNames.contains('articles')) return;
+      var tx = db.transaction('articles', 'readonly');
+      var getAll = tx.objectStore('articles').getAll();
+      getAll.onsuccess = function() {
+        var articles = getAll.result;
+        if (!articles || articles.length === 0) return;
+        articles.sort(function(a, b) { return b.updatedAt - a.updatedAt; });
+        var recent = articles.slice(0, 3);
+        var html = '<ul class="article-list" style="margin-bottom:24px">';
+        recent.forEach(function(a) {
+          var date = new Date(a.updatedAt).toISOString().split('T')[0];
+          var text = a.content.replace(/<[^>]*>/g, '').substring(0, 60);
+          if (a.content.replace(/<[^>]*>/g, '').length > 60) text += '…';
+          html += '<li>' +
+            '<a href="article.html?id=' + encodeURIComponent(a.id) + '">' + escHtml(a.title) + '</a>' +
+            '<div class="article-date">' + date + '</div>' +
+            '<p class="article-excerpt">' + escHtml(text) + '</p>' +
+            '</li>';
+        });
+        html += '</ul>';
+        container.innerHTML = html;
+      };
+    };
+
+    function escHtml(str) {
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  })();
+  </script>
 </body>
 </html>

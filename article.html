@@ -1,0 +1,135 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文章 — 我的小站</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .article-body {
+      font-size: 1rem;
+      line-height: 2;
+      color: #444;
+    }
+    .article-body h2 {
+      font-weight: 500;
+      font-size: 1.2rem;
+      margin: 36px 0 12px;
+      color: #1a1a1a;
+    }
+    .article-body h3 {
+      font-weight: 500;
+      font-size: 1.1rem;
+      margin: 28px 0 10px;
+      color: #1a1a1a;
+    }
+    .article-body p { margin-bottom: 16px; }
+    .article-body blockquote {
+      border-left: 3px solid #ddd;
+      padding-left: 16px;
+      color: #888;
+      margin: 20px 0;
+    }
+    .article-body img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+      margin: 12px 0;
+    }
+    .article-body ul, .article-body ol {
+      margin: 12px 0 12px 24px;
+    }
+    .article-body li { margin-bottom: 4px; }
+    .article-date {
+      color: #aaa;
+      font-size: 0.8rem;
+      margin-bottom: 20px;
+    }
+    .back-link {
+      display: inline-block;
+      margin-top: 50px;
+      color: #999;
+      font-size: 0.9rem;
+      text-decoration: none;
+      border-bottom: 1px solid #ddd;
+    }
+    .back-link:hover {
+      color: #333;
+      border-color: #333;
+    }
+    .not-found {
+      text-align: center;
+      color: #ccc;
+      padding: 80px 0;
+      font-size: 1.1rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>我的小站</h1>
+      <p class="subtitle">写点东西，留些痕迹</p>
+    </div>
+  </header>
+
+  <nav>
+    <div class="container">
+      <a href="index.html">首页</a>
+      <a href="articles.html" class="active">文字</a>
+      <a href="pdfs.html">PDF 作品</a>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div id="articleContent"></div>
+    <div class="not-found hidden" id="notFound">文章未找到</div>
+    <a href="articles.html" class="back-link">← 返回文字列表</a>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>© 2026 我的小站</p>
+    </div>
+  </footer>
+
+  <script>
+  (function() {
+    var params = new URLSearchParams(window.location.search);
+    var id = params.get('id');
+    var contentEl = document.getElementById('articleContent');
+    var notFoundEl = document.getElementById('notFound');
+
+    if (!id) { notFoundEl.classList.remove('hidden'); return; }
+
+    var req = indexedDB.open('MySiteDB', 1);
+    req.onsuccess = function(e) {
+      var db = e.target.result;
+      if (!db.objectStoreNames.contains('articles')) { notFoundEl.classList.remove('hidden'); return; }
+      var tx = db.transaction('articles', 'readonly');
+      var getReq = tx.objectStore('articles').get(id);
+      getReq.onsuccess = function() {
+        var a = getReq.result;
+        if (!a) { notFoundEl.classList.remove('hidden'); return; }
+        var date = new Date(a.updatedAt).toISOString().split('T')[0];
+        document.title = escHtml(a.title) + ' — 我的小站';
+        contentEl.innerHTML =
+          '<article>' +
+          '<h2 class="page-title">' + escHtml(a.title) + '</h2>' +
+          '<div class="article-date">' + date + '</div>' +
+          '<div class="article-body" style="margin-top:24px;">' + a.content + '</div>' +
+          '</article>';
+      };
+      getReq.onerror = function() { notFoundEl.classList.remove('hidden'); };
+    };
+    req.onerror = function() { notFoundEl.classList.remove('hidden'); };
+
+    function escHtml(str) {
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  })();
+  </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -23,8 +23,12 @@
   </nav>
 
   <main class="container">
-    <h2 class="page-title">? 文字</h2>
+    <h2 class="page-title">✍️ 文字</h2>
 
+    <!-- 动态文章列表 -->
+    <ul class="article-list" id="dynamicList"></ul>
+
+    <!-- 静态文章（手动创建的 HTML 文件） -->
     <ul class="article-list">
       <li>
         <a href="articles/demo.html">示例文章：开始写点什么</a>
@@ -33,7 +37,7 @@
       </li>
     </ul>
 
-    <p style="text-align:center;color:#ccc;margin-top:60px;">更多文章即将到来</p>
+    <p style="text-align:center;color:#ccc;margin-top:60px;" id="noMoreHint">更多文章即将到来</p>
   </main>
 
   <footer>
@@ -41,5 +45,48 @@
       <p>© 2026 我的小站</p>
     </div>
   </footer>
+
+  <script>
+  (function() {
+    const DB_NAME = 'MySiteDB';
+    const listEl = document.getElementById('dynamicList');
+    const hintEl = document.getElementById('noMoreHint');
+
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onsuccess = function(e) {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('articles')) { render([]); return; }
+      const tx = db.transaction('articles', 'readonly');
+      const getAll = tx.objectStore('articles').getAll();
+      getAll.onsuccess = function() {
+        render(getAll.result);
+      };
+      getAll.onerror = function() { render([]); };
+    };
+    req.onerror = function() { render([]); };
+
+    function render(articles) {
+      if (!articles || articles.length === 0) return;
+      articles.sort((a, b) => b.updatedAt - a.updatedAt);
+      listEl.innerHTML = articles.map(function(a) {
+        var date = new Date(a.updatedAt).toISOString().split('T')[0];
+        var text = a.content.replace(/<[^>]*>/g, '').substring(0, 80);
+        if (a.content.replace(/<[^>]*>/g, '').length > 80) text += '…';
+        return '<li>' +
+          '<a href="article.html?id=' + encodeURIComponent(a.id) + '">' + escHtml(a.title) + '</a>' +
+          '<div class="article-date">' + date + '</div>' +
+          '<p class="article-excerpt">' + escHtml(text) + '</p>' +
+          '</li>';
+      }).join('');
+      if (articles.length > 0) hintEl.textContent = '';
+    }
+
+    function escHtml(str) {
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  })();
+  </script>
 </body>
 </html>
