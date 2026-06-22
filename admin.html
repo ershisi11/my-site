@@ -132,7 +132,7 @@
     <input type="password" id="pwdInput" placeholder="密码" autofocus>
     <div class="err" id="loginErr"></div>
     <button onclick="doLogin()">进入</button>
-    <p class="hint">默认密码: admin123</p>
+    <p class="hint">密码存储在本地 config.json</p>
   </div>
 </div>
 
@@ -265,12 +265,18 @@ function dbDelete(storeName, key) {
 }
 
 // ===== Password =====
-const DEFAULT_PWD = '187823';
+// password from config.json
+
 let editingId = null;
 
 async function getPassword() {
+  try {
+    const resp = await fetch('./config.json');
+    const cfg = await resp.json();
+    if (cfg && cfg.password) return cfg.password;
+  } catch(e) {}
   const cfg = await dbGet('config', 'password');
-  return cfg ? cfg.value : DEFAULT_PWD;
+  return cfg ? cfg.value : null;
 }
 
 async function setPassword(newPwd) {
@@ -460,7 +466,7 @@ async function saveArticle() {
 async function exportAll() {
   const articles = await dbGetAll('articles');
   const cfg = await dbGet('config', 'password');
-  const data = { articles, password: cfg?.value || DEFAULT_PWD, exportedAt: new Date().toISOString() };
+  const data = { articles, password: cfg?.value || '', exportedAt: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -507,4 +513,7 @@ openDB();
 </script>
 </body>
 </html>
+
+
+
 

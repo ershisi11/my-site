@@ -248,7 +248,7 @@
 
   <script>
   (function() {
-    var DEFAULT_PWD = 'admin123';
+    // password read from config.json or IndexedDB
     var DB_NAME = 'MySiteDB';
     var DB_VERSION = 2;
     var db = null;
@@ -309,10 +309,24 @@
       if (e.target === this) window.closePwdDialog();
     });
 
+    function getEffectivePassword(cb) {
+      fetch('./config.json')
+        .then(function(r) { return r.json(); })
+        .then(function(cfg) { cb(cfg.password); })
+        .catch(function() {
+          dbGet('config', 'password', function(cfg) {
+            cb(cfg ? cfg.value : null);
+          });
+        });
+    }
+
     window.verifyPassword = function() {
       var input = document.getElementById('pwdInput').value;
-      dbGet('config', 'password', function(cfg) {
-        var savedPwd = cfg ? cfg.value : DEFAULT_PWD;
+      getEffectivePassword(function(savedPwd) {
+        if (!savedPwd) {
+          document.getElementById('pwdErr').textContent = '未设置密码，请先访问管理后台';
+          return;
+        }
         if (input === savedPwd) {
           window.closePwdDialog();
           enterEditMode();
@@ -498,5 +512,6 @@
   </script>
 </body>
 </html>
+
 
 
