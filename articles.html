@@ -255,6 +255,51 @@
   (function() {
     var DEFAULT_PWD = 'admin123';
     var DB_NAME = 'MySiteDB';
+    var DB_VERSION = 1;
+    var db = null;
+
+    // ===== 打开数据库（仅一次） =====
+    function openDB(cb) {
+      var req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = function(e) {
+        var d = e.target.result;
+        if (!d.objectStoreNames.contains('articles')) {
+          d.createObjectStore('articles', { keyPath: 'id' });
+        }
+        if (!d.objectStoreNames.contains('config')) {
+          d.createObjectStore('config', { keyPath: 'key' });
+        }
+      };
+      req.onsuccess = function(e) { db = e.target.result; cb(); };
+      req.onerror = function(e) { console.error('IndexedDB open failed', e.target.error); };
+    }
+
+    function dbPut(storeName, data, cb, errCb) {
+      try {
+        var tx = db.transaction(storeName, 'readwrite');
+        tx.objectStore(storeName).put(data);
+        tx.oncomplete = function() { if (cb) cb(); };
+        tx.onerror = function(e) { if (errCb) errCb(e.target.error); };
+      } catch(e) { if (errCb) errCb(e); }
+    }
+
+    function dbGet(storeName, key, cb) {
+      try {
+        var tx = db.transaction(storeName, 'readonly');
+        var req = tx.objectStore(storeName).get(key);
+        req.onsuccess = function() { cb(req.result); };
+        req.onerror = function() { cb(null); };
+      } catch(e) { cb(null); }
+    }
+
+    function dbGetAll(storeName, cb) {
+      try {
+        var tx = db.transaction(storeName, 'readonly');
+        var req = tx.objectStore(storeName).getAll();
+        req.onsuccess = function() { cb(req.result); };
+        req.onerror = function() { cb([]); };
+      } catch(e) { cb([]); }
+    }
 
     // ===== 密码弹窗 =====
     window.showPwdDialog = function() {
@@ -278,7 +323,8 @@
 
     window.verifyPassword = function() {
       var input = document.getElementById('pwdInput').value;
-      getSavedPassword(function(savedPwd) {
+      dbGet('config', 'password', function(cfg) {
+        var savedPwd = cfg ? cfg.value : DEFAULT_PWD;
         if (input === savedPwd) {
           window.closePwdDialog();
           openEditor();
@@ -287,19 +333,6 @@
         }
       });
     };
-
-    function getSavedPassword(cb) {
-      var req = indexedDB.open(DB_NAME, 1);
-      req.onsuccess = function(e) {
-        var db = e.target.result;
-        if (!db.objectStoreNames.contains('config')) { cb(DEFAULT_PWD); return; }
-        var tx = db.transaction('config', 'readonly');
-        var getReq = tx.objectStore('config').get('password');
-        getReq.onsuccess = function() { cb(getReq.result ? getReq.result.value : DEFAULT_PWD); };
-        getReq.onerror = function() { cb(DEFAULT_PWD); };
-      };
-      req.onerror = function() { cb(DEFAULT_PWD); };
-    }
 
     // ===== 编辑器切换 =====
     function openEditor() {
@@ -342,7 +375,6 @@
       event.target.value = '';
     };
 
-    // 粘贴图片
     document.addEventListener('paste', function(e) {
       var editorView = document.getElementById('editorView');
       if (!editorView.classList.contains('show')) return;
@@ -371,45 +403,34 @@
       if (!title) { alert('请输入标题'); return; }
       if (!content || content === '<br>') { alert('请输入内容'); return; }
 
-      var articleId = 'a_' + Date.now();
+      if (!db) { alert('数据库未就绪，请刷新页面后重试'); return; }
+
       var article = {
-        id: articleId,
+        id: 'a_' + Date.now(),
         title: title,
         content: content,
         createdAt: Date.now(),
         updatedAt: Date.now()
       };
 
-      var req = indexedDB.open(DB_NAME, 1);
-      req.onsuccess = function(e) {
-        var db = e.target.result;
-        var tx = db.transaction('articles', 'readwrite');
-        tx.objectStore('articles').put(article);
-        tx.oncomplete = function() {
-          alert('发布成功！');
-          window.backToList();
-        };
-      };
-      req.onerror = function() { alert('保存失败，请重试'); };
+      dbPut('articles', article, function() {
+        alert('发布成功！');
+        window.backToList();
+      }, function(err) {
+        alert('保存失败：' + (err && err.message ? err.message : '未知错误'));
+      });
     };
 
     // ===== 文章列表 =====
     function loadArticles() {
       var listEl = document.getElementById('dynamicList');
       var hintEl = document.getElementById('noMoreHint');
+      if (!db) { render([]); return; }
+      if (!db.objectStoreNames.contains('articles')) { render([]); return; }
 
-      var req = indexedDB.open(DB_NAME, 1);
-      req.onsuccess = function(e) {
-        var db = e.target.result;
-        if (!db.objectStoreNames.contains('articles')) { render([]); return; }
-        var tx = db.transaction('articles', 'readonly');
-        var getAll = tx.objectStore('articles').getAll();
-        getAll.onsuccess = function() {
-          render(getAll.result);
-        };
-        getAll.onerror = function() { render([]); };
-      };
-      req.onerror = function() { render([]); };
+      dbGetAll('articles', function(articles) {
+        render(articles);
+      });
 
       function render(articles) {
         if (!articles || articles.length === 0) { listEl.innerHTML = ''; return; }
@@ -435,8 +456,9 @@
     }
 
     // ===== 初始化 =====
-    loadArticles();
+    openDB(function() { loadArticles(); });
   })();
   </script>
 </body>
 </html>
+
