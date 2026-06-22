@@ -217,7 +217,7 @@
 <script>
 // ===== IndexedDB =====
 const DB_NAME = 'MySiteDB';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 let db;
 
 function openDB() {
@@ -261,6 +261,25 @@ function dbGetAll(storeName) {
     const req = tx.objectStore(storeName).getAll();
     req.onsuccess = () => resolve(req.result);
     req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+function dbSaveRevision(articleId, title, content) {
+  return dbPut('revisions', { revId: 'rev_' + Date.now(), articleId, title, content, savedAt: Date.now() });
+}
+function dbGetRevisions(articleId) {
+  return new Promise((resolve, reject) => {
+    try {
+      const tx = db.transaction('revisions', 'readonly');
+      const req = tx.objectStore('revisions').getAll();
+      req.onsuccess = () => {
+        const all = req.result || [];
+        const filtered = all.filter(r => r.articleId === articleId);
+        filtered.sort((a, b) => b.savedAt - a.savedAt);
+        resolve(filtered);
+      };
+      req.onerror = () => resolve([]);
+    } catch(e) { resolve([]); }
   });
 }
 
@@ -503,6 +522,10 @@ async function saveArticle() {
     createdAt: editingId ? (await dbGet('articles', id))?.createdAt || Date.now() : Date.now(),
     updatedAt: Date.now(),
   };
+  if (editingId) {
+    const oldArticle = await dbGet('articles', editingId);
+    if (oldArticle) await dbSaveRevision(editingId, oldArticle.title, oldArticle.content);
+  }
   await dbPut('articles', article);
   alert('保存成功！');
   backToList();
@@ -541,6 +564,40 @@ async function importAll(event) {
   event.target.value = '';
 }
 
+async function showArticleHistory(articleId) {
+  const revisions = await dbGetRevisions(articleId);
+  if (revisions.length === 0) { alert('暂无历史版本'); return; }
+  let html = '<div style="max-height:70vh;overflow-y:auto;">';
+  revisions.forEach((rev, idx) => {
+    const date = new Date(rev.savedAt).toLocaleString('zh-CN');
+    html += '<div style="border:1px solid #eee;border-radius:6px;padding:14px;margin-bottom:10px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+        '<span style="font-weight:500;">' + escHtml(rev.title) + '</span>' +
+        '<span style="color:#999;font-size:0.8rem;">' + date + '</span>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;">' +
+        '<button onclick="previewAdminRev(\'' + rev.revId + '\',\'' + articleId + '\')" class="btn btn-outline btn-sm">预览</button>' +
+        '<button onclick="restoreAdminRev(\'' + rev.revId + '\',\'' + articleId + '\')" class="btn btn-outline btn-sm" style="color:#c0392b;border-color:#c0392b;">恢复此版本</button>' +
+      '</div>' +
+      '<div id="adminRev_' + rev.revId + '" style="display:none;margin-top:10px;padding:12px;background:#fafaf8;border-radius:4px;max-height:300px;overflow-y:auto;"></div>' +
+    '</div>';
+  });
+  html += '</div>';
+  const win = window.open('', '_blank', 'width=700,height=600');
+  win.document.write('<html><head><meta charset=utf-8><title>版本历史</title><style>body{font-family:sans-serif;padding:20px;color:#333;line-height:1.8}</style></head><body><h2>📜 版本历史</h2>' + html + '<script>' +
+    'function previewAdminRev(revId,articleId){var el=document.getElementById("adminRev_"+revId);if(el.style.display==="block"){el.style.display="none";return;}' +
+    'var req=indexedDB.open("MySiteDB",3);req.onsuccess=function(e){var db=e.target.result;var tx=db.transaction("revisions","readonly");var r=tx.objectStore("revisions").getAll();' +
+    'r.onsuccess=function(){var revs=r.result||[];for(var i=0;i<revs.length;i++){if(revs[i].revId===revId){el.innerHTML=revs[i].content;el.style.display="block";return;}}};};}' +
+    'function restoreAdminRev(revId,articleId){if(!confirm("确定恢复到此版本吗？当前版本会自动存档。"))return;' +
+    'var req=indexedDB.open("MySiteDB",3);req.onsuccess=function(e){var db=e.target.result;var tx=db.transaction("revisions","readonly");var r=tx.objectStore("revisions").getAll();' +
+    'r.onsuccess=function(){var revs=r.result||[];var rev=null;for(var i=0;i<revs.length;i++){if(revs[i].revId===revId){rev=revs[i];break;}}if(!rev)return;' +
+    'var tx2=db.transaction("articles","readonly");var ar=tx2.objectStore("articles").get(articleId);ar.onsuccess=function(){var a=ar.result;if(!a)return;' +
+    'var tx3=db.transaction("revisions","readwrite");tx3.objectStore("revisions").put({revId:"rev_"+Date.now(),articleId:articleId,title:a.title,content:a.content,savedAt:Date.now()});' +
+    'tx3.oncomplete=function(){var tx4=db.transaction("articles","readwrite");tx4.objectStore("articles").put({id:articleId,title:rev.title,content:rev.content,createdAt:a.createdAt,updatedAt:Date.now()});' +
+    'tx4.oncomplete=function(){alert("已恢复！");window.close();opener.location.reload();};};};};};}' +
+    '<\/script></body></html>');
+}
+
 // ===== Helpers =====
 function stripHtml(html) {
   const tmp = document.createElement('div');
@@ -558,6 +615,12 @@ function escHtml(str) {
 </script>
 </body>
 </html>
+
+
+
+
+
+
 
 
 

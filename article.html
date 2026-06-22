@@ -250,7 +250,7 @@
   (function() {
     // password read from config.json or IndexedDB
     var DB_NAME = 'MySiteDB';
-    var DB_VERSION = 2;
+    var DB_VERSION = 3;
     var db = null;
     var currentArticle = null;
     var editMode = false;
@@ -266,6 +266,9 @@
         }
         if (!d.objectStoreNames.contains('config')) {
           d.createObjectStore('config', { keyPath: 'key' });
+        }
+        if (!d.objectStoreNames.contains('revisions')) {
+          d.createObjectStore('revisions', { keyPath: 'revId' });
         }
       };
       req.onsuccess = function(e) { db = e.target.result; cb(); };
@@ -288,6 +291,23 @@
         req.onsuccess = function() { cb(req.result); };
         req.onerror = function() { cb(null); };
       } catch(e) { cb(null); }
+    }
+
+    function dbSaveRevision(articleId, title, content, cb) {
+      dbPut('revisions', { revId: 'rev_' + Date.now(), articleId: articleId, title: title, content: content, savedAt: Date.now() }, cb);
+    }
+    function dbGetRevisions(articleId, cb) {
+      try {
+        var tx = db.transaction('revisions', 'readonly');
+        var req = tx.objectStore('revisions').getAll();
+        req.onsuccess = function() {
+          var all = req.result || [];
+          var filtered = all.filter(function(r) { return r.articleId === articleId; });
+          filtered.sort(function(a, b) { return b.savedAt - a.savedAt; });
+          cb(filtered);
+        };
+        req.onerror = function() { cb([]); };
+      } catch(e) { cb([]); }
     }
 
     // ===== 密码弹窗 =====
@@ -446,6 +466,82 @@
       }
     });
 
+    // ===== 版本历史 =====
+    window.closeHistory = function() { document.getElementById('historyOverlay').classList.remove('show'); };
+    (function() {
+      var ho = document.getElementById('historyOverlay');
+      if (ho) ho.addEventListener('click', function(e) { if (e.target === ho) window.closeHistory(); });
+    })();
+
+    window.showHistory = function(articleId) {
+      dbGetRevisions(articleId, function(revisions) {
+        var container = document.getElementById('historyContent');
+        if (revisions.length === 0) {
+          container.innerHTML = '<p style="color:#ccc;text-align:center;padding:40px 0;">暂无历史版本</p>';
+        } else {
+          var html = '';
+          revisions.forEach(function(rev, idx) {
+            var date = new Date(rev.savedAt).toLocaleString('zh-CN');
+            html += '<div style="border:1px solid #eee;border-radius:6px;padding:14px;margin-bottom:10px;">' +
+              '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+                '<span style="font-weight:500;font-size:0.9rem;">' + escHtml(rev.title) + '</span>' +
+                '<span style="color:#999;font-size:0.75rem;">' + date + '</span>' +
+              '</div>' +
+              '<div style="display:flex;gap:8px;">' +
+                '<button onclick="previewRev(\'' + rev.revId + '\')" style="padding:4px 12px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer;font-size:0.8rem;">预览</button>' +
+                '<button onclick="restoreRev(\'' + rev.revId + '\',\'' + articleId + '\')" style="padding:4px 12px;border:1px solid #c0392b;border-radius:4px;background:#fff;color:#c0392b;cursor:pointer;font-size:0.8rem;">恢复此版本</button>' +
+              '</div>' +
+              '<div id="revPrev_' + rev.revId + '" style="display:none;margin-top:10px;padding:12px;background:#fafaf8;border-radius:4px;font-size:0.9rem;line-height:1.8;max-height:300px;overflow-y:auto;"></div>' +
+            '</div>';
+          });
+          container.innerHTML = html;
+        }
+        document.getElementById('historyOverlay').classList.add('show');
+      });
+    };
+
+    window.previewRev = function(revId) {
+      var el = document.getElementById('revPrev_' + revId);
+      if (el.style.display === 'block') { el.style.display = 'none'; return; }
+      // Find the revision in the already-loaded list
+      var allRevs = document.querySelectorAll('[id^="revPrev_"]');
+      for (var i = 0; i < allRevs.length; i++) {
+        if (allRevs[i].id === 'revPrev_' + revId) {
+          var parent = allRevs[i].parentElement;
+          var articleId = currentArticle ? currentArticle.id : '';
+          dbGetRevisions(articleId, function(revisions) {
+            for (var j = 0; j < revisions.length; j++) {
+              if (revisions[j].revId === revId) { el.innerHTML = revisions[j].content; el.style.display = 'block'; return; }
+            }
+          });
+        }
+      }
+    };
+
+    window.restoreRev = function(revId, articleId) {
+      if (!confirm('确定恢复到此版本吗？当前版本会自动存档。')) return;
+      dbGetRevisions(articleId, function(revisions) {
+        var rev = null;
+        for (var i = 0; i < revisions.length; i++) {
+          if (revisions[i].revId === revId) { rev = revisions[i]; break; }
+        }
+        if (!rev || !currentArticle) return;
+        dbSaveRevision(articleId, currentArticle.title, currentArticle.content, function() {
+          dbPut('articles', {
+            id: articleId,
+            title: rev.title,
+            content: rev.content,
+            createdAt: currentArticle.createdAt,
+            updatedAt: Date.now()
+          }, function() {
+            alert('已恢复！请刷新页面查看。');
+            window.closeHistory();
+            location.reload();
+          });
+        });
+      });
+    };
+
     // ===== 保存 =====
     window.saveArticleInline = function() {
       var title = document.getElementById('editableTitle').value.trim();
@@ -454,25 +550,29 @@
       if (!content || content === '<br>') { alert('请输入内容'); return; }
       if (!db) { alert('数据库未就绪，请刷新页面后重试'); return; }
 
-      dbPut('articles', {
-        id: currentArticle.id,
-        title: title,
-        content: content,
-        createdAt: currentArticle.createdAt,
-        updatedAt: Date.now()
-      }, function() {
-        alert('保存成功！');
-        currentArticle.title = title;
-        currentArticle.content = content;
-        currentArticle.updatedAt = Date.now();
-        document.querySelector('.page-title').innerHTML = escHtml(title);
-        document.title = escHtml(title) + ' — 我的小站';
-        document.querySelector('.article-date').textContent = new Date().toISOString().split('T')[0];
-        document.getElementById('editableBody').innerHTML = content;
-        window.exitEditMode();
-      }, function(err) {
-        alert('保存失败：' + (err && err.message ? err.message : '未知错误'));
-      });
+      function doSaveInline() {
+        dbPut('articles', {
+          id: currentArticle.id,
+          title: title,
+          content: content,
+          createdAt: currentArticle.createdAt,
+          updatedAt: Date.now()
+        }, function() {
+          alert('保存成功！');
+          currentArticle.title = title;
+          currentArticle.content = content;
+          currentArticle.updatedAt = Date.now();
+          document.querySelector('.page-title').innerHTML = escHtml(title);
+          document.title = escHtml(title) + ' — 我的小站';
+          document.querySelector('.article-date').textContent = new Date().toISOString().split('T')[0];
+          document.getElementById('editableBody').innerHTML = content;
+          window.exitEditMode();
+        }, function(err) {
+          alert('保存失败：' + (err && err.message ? err.message : '未知错误'));
+        });
+      }
+
+      dbSaveRevision(currentArticle.id, currentArticle.title, currentArticle.content, doSaveInline);
     };
 
     // ===== 文章加载 =====
@@ -517,8 +617,9 @@
             '<button class="btn-cancel" onclick="exitEditMode()">取消</button>' +
           '</div>' +
           '<div class="edit-entry" id="editEntry">' +
-            '<a onclick="showPwdDialog()">✎ 编辑此文</a>' +
-          '</div>' +
+          '<div class="edit-entry" id="editEntry">' +
+            '<a onclick="showPwdDialog()">✎ 编辑此文</a> &nbsp;' +
+            '<a onclick="showHistory(\'' + a.id + '\')">📜 版本历史</a>' +
           '</article>';
       });
     }
@@ -535,6 +636,13 @@
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
 
 
 

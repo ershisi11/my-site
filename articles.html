@@ -255,7 +255,7 @@
   (function() {
     // password read from config.json or IndexedDB
     var DB_NAME = 'MySiteDB';
-    var DB_VERSION = 2;
+    var DB_VERSION = 3;
     var db = null;
     var pwdSetupMode = false;
 
@@ -269,6 +269,9 @@
         }
         if (!d.objectStoreNames.contains('config')) {
           d.createObjectStore('config', { keyPath: 'key' });
+        }
+        if (!d.objectStoreNames.contains('revisions')) {
+          d.createObjectStore('revisions', { keyPath: 'revId' });
         }
       };
       req.onsuccess = function(e) { db = e.target.result; cb(); };
@@ -498,6 +501,7 @@
   </script>
 </body>
 </html>
+
 
 
 
