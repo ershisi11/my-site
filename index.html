@@ -163,6 +163,7 @@
     var editingId = null;
     var allArticles = [];
     var pendingAction = null;
+    var pwdSetupMode = false;
 
     // ===== 打开数据库（仅一次，复用连接） =====
     function openDB(cb) {
@@ -246,6 +247,7 @@
 
     window.closePwdDialog = function() {
       document.getElementById('pwdOverlay').classList.remove('show');
+      resetPwdDialog();
     };
 
     document.getElementById('pwdInput').addEventListener('keydown', function(e) {
@@ -269,9 +271,32 @@
 
     window.verifyPassword = function() {
       var input = document.getElementById('pwdInput').value;
+      if (pwdSetupMode) {
+        if (!input || input.length < 3) {
+          document.getElementById('pwdErr').textContent = '密码至少3位，请重新输入';
+          return;
+        }
+        dbPut('config', { key: 'password', value: input }, function() {
+          pwdSetupMode = false;
+          resetPwdDialog();
+          authed = true;
+          document.getElementById('authBadge').style.display = 'inline';
+          window.closePwdDialog();
+          loadRecentArticles();
+          if (pendingAction) { var a = pendingAction; pendingAction = null; a(); }
+        }, function() {
+          document.getElementById('pwdErr').textContent = '保存失败，请重试';
+        });
+        return;
+      }
       getEffectivePassword(function(savedPwd) {
         if (!savedPwd) {
-          document.getElementById('pwdErr').textContent = '未设置密码，请先访问管理后台';
+          pwdSetupMode = true;
+          document.querySelector('.pwd-dialog h3').textContent = '🔑 首次设置密码';
+          document.querySelector('.pwd-dialog .sub').textContent = '此设备首次访问，请设置管理密码';
+          document.getElementById('pwdInput').value = '';
+          document.getElementById('pwdErr').textContent = '';
+          document.getElementById('pwdInput').focus();
           return;
         }
         if (input === savedPwd) {
@@ -289,6 +314,12 @@
         }
       });
     };
+
+    function resetPwdDialog() {
+      pwdSetupMode = false;
+      document.querySelector('.pwd-dialog h3').textContent = '🔒 验证身份';
+      document.querySelector('.pwd-dialog .sub').textContent = '输入管理密码以启用编辑';
+    }
 
     function requireAuth(action) {
       if (authed) { action(); }
@@ -476,6 +507,7 @@
   </script>
 </body>
 </html>
+
 
 
 
